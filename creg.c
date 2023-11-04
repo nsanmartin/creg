@@ -5,10 +5,14 @@
 #include <opt-parse.h>
 #include <store.h>
 
-Err printChunk(const char* ln) { int r = printf("%s", ln); return r > 0 ? 0 : r; }
-Err printPreReg(const char reg) { int r = printf("\"%c ", reg); return r > 0 ? 0 : r; }
+void printChunk(const char* chunk, size_t len) { printf("%.*s", len, chunk); }
+
+void printPreReg(const char reg) { printf("\"%c ", reg); }
+void printPostLn(void) { puts(""); }
+void printPostSpace(void) { printf(" "); }
 void regTooLargefn(void) { puts("\t\033[91m""\\...""\033[0m"); }
-Err printRegs(void) { foreachReg(printPreReg, printChunk); }
+
+void skipPre(const char reg) { }
 
 int main(int argc, const char* argv[]) {
 
@@ -19,26 +23,34 @@ int main(int argc, const char* argv[]) {
         exit(-1);
     }
 
+    e = Ok;
     CliInput* cli = opt_parse(&mem, argc, argv);
     if (cli) {
         switch(cli->tag) {
             case StdInputTag:
                 puts("read stdin");
-                return 0;
+                break;
             case RegsInputTag:
-                puts("query");
-                return 0;
+                for (int i = 0; i < cli->regs.n; ++i) {
+                    e = foreachReg(cli->regs.regs[i], skipPre, printChunk, printPostSpace);
+                    puts("");
+                    if (e) {
+                        fprintf(stderr, "%s\n", "Error processing regs, aborting.");
+                        exit(-1);
+                    }
+                }
+                break;
             case RegsInputSepTag:
                 puts("qery with sep");
-                return 0;
+                break;
             case PrintInputTag: 
-                Err e = printRegs();
-                if (e) {
-                    fprintf(stderr, "%s\n", "Error processing regs, aborting.");
-                    exit(-1);
-                }
-                return 0;
+                e = foreachReg("", printPreReg, printChunk, printPostLn);
+                break;
             default: LOG_INVALID_TAG;
+        }
+        if (e) {
+            fprintf(stderr, "%s\n", "Error processing regs, aborting.");
+            exit(-1);
         }
     }
 }
