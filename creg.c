@@ -5,7 +5,9 @@
 #include <opt-parse.h>
 #include <store.h>
 
-void printChunk(const char* chunk, size_t len) { printf("%.*s", len, chunk); }
+void printChunk(const char* chunk, size_t len) {
+    fwrite(chunk, 1, len, stdout);
+}
 
 void printPreReg(const char reg) { printf("\"%c ", reg); }
 void printPostLn(void) { puts(""); }

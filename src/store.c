@@ -5,11 +5,11 @@
 
 #include <store.h>
 
-enum { regFilePathMaxLen = 1000, regMaxSize = 100 };
+enum { regFilePathMaxLen = 1000, regBufSize = 100 };
 
 
 const char _regFileName[] = "/.reg/regfile";
-const char _regList[]     = "0123456789abcdefghijklmnopqrstuvwxyz";
+const char _queryRegs[]     = "0123456789abcdefghijklmnopqrstuvwxyz";
 
 char _regFilePath[regFilePathMaxLen] = {0};
 
@@ -55,17 +55,30 @@ LastIx getLastIx(const char* s) {
     return (LastIx) { .newline=false, .ix=ix };
 }
 
-bool regInList(const char reg, const char* list) {
-    if (!*list) { return true; }
-    while(*list) { if (reg == *list++) { return true; } }
-    return false;
+typedef struct { bool in; size_t ix; } InList;
+
+size_t charInList(const char reg, const char* list) {
+    if (!*list) { return -1; }
+    size_t ix = 0;
+    while(list[ix]) {
+        if (reg == list[ix]) { return ix; }
+        ++ix;
+    }
+    return ix;
+}
+
+Err ignoreUntilEol(FILE*f, bool newlineRead) {
+    char buf[regBufSize];
+    while(!newlineRead && fgets(buf, sizeof(buf), f) != NULL) {
+        newlineRead = getLastIx(buf).newline;
+    }
 }
 
 /**
- * regList == "" means all regs
+ * queryRegs == "" means all regs
  */
 Err foreachReg(
-        const char* regList,
+        const char* queryRegs,
         void(*preFn)(const char),
         void(*chunkFn)(const char*, size_t len),
         void(*postFn)(void)
@@ -79,38 +92,49 @@ Err foreachReg(
         exit(-1);
     }
 
-    char buf[regMaxSize];
+    char buf[regBufSize];
     size_t regindex = 0;
 
-    while(fgets(buf, sizeof(buf), regfile) != NULL && regindex < sizeof(_regList)) {
-        char reg = _regList[regindex];
+    size_t queryRegsLen = strlen(queryRegs);
+    char visited[queryRegsLen];
+    bzero(visited, queryRegsLen);
+
+    while(fgets(buf, sizeof(buf), regfile) != NULL && regindex < sizeof(_queryRegs)) {
+        char reg = _queryRegs[regindex];
+        size_t regIxInQuery = charInList(reg, queryRegs);
+        bool regInList = !*queryRegs || regIxInQuery < queryRegsLen;
         LastIx lastIx = getLastIx(buf);
-        bool reg_in_reglist = regInList(reg, regList);
 
-        if (reg_in_reglist) {
+        if (regInList) {
+            visited[regIxInQuery] = 1;
             preFn(reg);
-        }
-
-        if (lastIx.newline) {
-            regindex++;
-            if (reg_in_reglist) {
-                chunkFn(buf, lastIx.ix);
-                postFn();
-            }
-        } else {
-            while(fgets(buf, sizeof(buf), regfile) != NULL) {
-                lastIx = getLastIx(buf);
-                if (reg_in_reglist) { chunkFn(buf, lastIx.ix); }
-                if (lastIx.newline) {
-                    regindex++;
-                    if (reg_in_reglist) { postFn(); }
-                    break;
+            chunkFn(buf, lastIx.ix);
+            if (!lastIx.newline) {
+                while(fgets(buf, sizeof(buf), regfile) != NULL) {
+                    lastIx = getLastIx(buf);
+                    chunkFn(buf, lastIx.ix);
+                    if (lastIx.newline) {
+                        if (regInList) { postFn(); }
+                        break;
+                    }
                 }
             }
+            postFn();
+        } else {
+            ignoreUntilEol(regfile, lastIx.newline);
+        }
+        regindex++;
+    }
+    
+    
+    fclose(regfile);
+
+    for (int i = 0; i < queryRegsLen; ++i) {
+        if (!visited[i]) {
+            fprintf(stderr, "Not register %c!\n", queryRegs[i]);
+            return -1;
         }
     }
-
-    fclose(regfile);
     return Ok;
 }
 
