@@ -1,0 +1,8 @@
+#ifndef __LIST_H_
+#define __LIST_H_
+
+typedef struct {
+    const char** list;
+    const siee_t len;
+} ListOfStr;
+#endif
