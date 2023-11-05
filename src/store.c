@@ -19,14 +19,14 @@ const char* getRegfilePath(void) {
     if (_regFilePath[0] == 0) {
         const char* basedir = getenv("HOME");
         if (!basedir) {
-            fprintf(stderr, "%s\n", "Not HOME path found in env, aborting.");
-            exit(-1);
+            fprintf(stderr, "Not HOME path found in env.");
+            return 0x0;
         }
         size_t maxlen = regFilePathMaxLen - sizeof(_regFileName);
         size_t len = strnlen(basedir, maxlen);
         if (len == maxlen) {
-            fprintf(stderr, "%s Aborting.\n", "HOME dir path large not supporte.");
-            exit(-1);
+            fprintf(stderr, "HOME dir path large not supported.");
+            return 0x0;
         }
         strncpy(_regFilePath, basedir, len);
         strncpy(&_regFilePath[len], _regFileName, sizeof(_regFileName));
@@ -83,7 +83,7 @@ Err foreachReg(
 
     FILE* regfile = fopen(getRegfilePath(), "r");
     if (!regfile) {
-        fprintf(stderr, "Could not read regfile %s, Aborting.", getRegfilePath());
+        perror("Could not read regfile.");
         return -1;
     }
 
@@ -131,24 +131,24 @@ typedef struct { char* buf; size_t sz; Err e; } SizedBuf;
 
 SizedBuf readFile(Mem m[static 1], FILE* f) {
     if (fseek(f, 0, SEEK_END) != 0) { 
-        fprintf(stderr, "Could not seek regfile end.");
+        perror("Could not seek regfile end.");
         return (SizedBuf) { .buf=0x0, .sz=0, .e=errno};
     }
 
     size_t len = ftell(f);
     if (len < 0) { 
-        fprintf(stderr, "Could not ftell the end position of regfile.");
+        perror("Could not ftell the end position of regfile.");
         return (SizedBuf) {.buf=0x0, .sz=0, .e=errno};
     }
     rewind(f);
     char* contents = memAlloc(m, len + 1);
     if (!contents) {
-        fprintf(stderr, "Could not alloc memory for regfile contents.");
+        perror("Could not alloc memory for regfile contents.");
         return (SizedBuf) {.buf=0x0, .sz=0, .e=errno};
     }
     size_t read = fread(contents, 1, len,f);
     if (read != len) {
-        fprintf(stderr, "Regfile could not be read.");
+        perror("Regfile could not be read.");
         return (SizedBuf) { .buf=0x0, .sz=0, .e=errno};
     }
     Err ferr = ferror(f);
@@ -163,7 +163,7 @@ SizedBuf readFile(Mem m[static 1], FILE* f) {
 Err updateRegfile(Mem m[static 1]) {
     FILE* regfile = fopen(getRegfilePath(), "r+");
     if (!regfile) {
-        fprintf(stderr, "Could not open regfile: %s.", getRegfilePath());
+        perror("Could not open regfile.");
         return errno;
     }
     SizedBuf regsContents = readFile(m, regfile);
@@ -179,28 +179,61 @@ Err updateRegfile(Mem m[static 1]) {
     while ((read = fread(buf, 1, regBufSize, stdin))) {
         if(fwrite(buf, 1, read, regfile) < read) {
             fclose(regfile);
-            fprintf(stderr, "There was an error writing to regfile");
+            perror("There was an error writing to regfile");
             return errno;
         };
     }
-    if (ferror(regfile)) {
-        fclose(regfile);
-        fprintf(stderr, "There was an error writing to regfile");
-        return errno;
+
+    Err res = Ok;
+    if (ferror(regfile)
+        || (fwrite(regsContents.buf, 1, regsContents.sz, regfile) < regsContents.sz) 
+        || (ferror(regfile)))
+    {
+        perror("There was an error writing to regfile");
+        res = errno;
     }
 
-    if (fwrite(regsContents.buf, 1, regsContents.sz, regfile) < regsContents.sz) {
-        fclose(regfile);
-        fprintf(stderr, "There was an error writing to regfile");
-        return errno;
+    if (EOF == fclose(regfile)) {
+        perror("There was an error closing regfile");
+        res = errno;
     };
-    if (ferror(regfile)) {
-        fclose(regfile);
-        fprintf(stderr, "There was an error writing to regfile.");
-        return errno;
-    }
-
-    fclose(regfile);
-    return Ok;
+    return res;
 }
 
+
+Err readRegs(
+        void(*preFn)(const char),
+        void(*chunkFn)(const char*, size_t len),
+        void(*postFn)(void)
+    )
+{
+    FILE* regfile = fopen(getRegfilePath(), "r");
+    if (!regfile) {
+        perror("Could not read regfile.");
+        return -1;
+    }
+
+    char buf[regBufSize];
+    size_t regindex = 0;
+
+
+    while(fgets(buf, sizeof(buf), regfile) != NULL && regindex < sizeof(_queryRegs)) {
+        char reg = _queryRegs[regindex];
+        LastIx lastIx = getLastIx(buf);
+
+        preFn(reg);
+        chunkFn(buf, lastIx.ix);
+
+        while(!lastIx.newline && fgets(buf, sizeof(buf), regfile) != NULL) {
+            lastIx = getLastIx(buf);
+            chunkFn(buf, lastIx.ix);
+        }
+        postFn();
+        regindex++;
+    }
+    
+    
+    fclose(regfile);
+
+    return Ok;
+}

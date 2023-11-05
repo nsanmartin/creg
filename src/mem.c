@@ -13,15 +13,25 @@ Err initMem(Mem m[static 1]) {
 }
 
 void* memAlloc(Mem m[static 1], size_t n) {
+    char* buf = 0x0;
     switch (m->tag) {
-        case DumbMemTag: return malloc(n);
+        case DumbMemTag:
+            buf = malloc(n);
+            if (!buf) {
+                perror("Could nor obtain memory");
+            }
+            return buf;
         case FixedSzGroupMemTag:
               if (n >= FixedSzGroupMemSz) {
                   fprintf(stderr, "%s\n", "Not enough Fixed Size Memory. Aborting.");
                   return 0x0;
               }
-              m->fixedSzGroup.ptr[n] = malloc(n);
-              return m->fixedSzGroup.ptr[n++];
+              buf = malloc(n);
+              if (!buf) {
+                  perror("Could nor obtain memory");
+                  return 0x0;
+              }
+              return m->fixedSzGroup.ptr[n++] = buf;
         default: LOG_INVALID_TAG;
     }
 }
