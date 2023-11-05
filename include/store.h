@@ -2,6 +2,7 @@
 #define __STORE_H_
 
 #include <util.h>
+#include <mem.h>
 
 const char* getRegfilePath(void);
 
@@ -12,4 +13,7 @@ Err foreachReg(
     void(*chunkFn)(const char*, size_t len),
     void(*postFn)(void)
 );
+
+//char* readRegfile(Mem m[static 1]);
+Err updateRegfile(Mem m[static 1]);
 #endif

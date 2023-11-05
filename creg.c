@@ -1,3 +1,4 @@
+#include <string.h>
 #include <stdlib.h>
 
 #include <util.h>
@@ -30,16 +31,12 @@ int main(int argc, const char* argv[]) {
     if (cli) {
         switch(cli->tag) {
             case StdInputTag:
-                puts("read stdin");
+                e = updateRegfile(&mem);
                 break;
             case RegsInputTag:
                 for (int i = 0; i < cli->regs.n; ++i) {
                     e = foreachReg(cli->regs.regs[i], skipPre, printChunk, printPostSpace);
-                    puts("");
-                    if (e) {
-                        fprintf(stderr, "%s\n", "Error processing regs, aborting.");
-                        exit(-1);
-                    }
+                    fwrite("\n", 1, 1, stdout);
                 }
                 break;
             case RegsInputSepTag:
@@ -51,8 +48,8 @@ int main(int argc, const char* argv[]) {
             default: LOG_INVALID_TAG;
         }
         if (e) {
-            fprintf(stderr, "%s\n", "Error processing regs, aborting.");
-            exit(-1);
+            fprintf(stderr, "error: %s. Aborting\n", strerror(e));
+            exit(e);
         }
     }
 }

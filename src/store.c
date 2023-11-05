@@ -2,10 +2,12 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <errno.h>
 
 #include <store.h>
+#include <mem.h>
 
-enum { regFilePathMaxLen = 1000, regBufSize = 100 };
+enum { regFilePathMaxLen = 1000, regBufSize = 4000 };
 
 
 const char _regFileName[] = "/.reg/regfile";
@@ -31,13 +33,6 @@ const char* getRegfilePath(void) {
     }
     return _regFilePath;
 }
-
-//bool newlineRead(const char* s) {
-//    while(*s) {
-//        if (*s++ == '\n') { return true; }
-//    }
-//    return false;
-//}
 
 typedef struct { bool newline; size_t ix; } LastIx;
 
@@ -89,7 +84,7 @@ Err foreachReg(
     FILE* regfile = fopen(getRegfilePath(), "r");
     if (!regfile) {
         fprintf(stderr, "Could not read regfile %s, Aborting.", getRegfilePath());
-        exit(-1);
+        return -1;
     }
 
     char buf[regBufSize];
@@ -109,15 +104,9 @@ Err foreachReg(
             visited[regIxInQuery] = 1;
             preFn(reg);
             chunkFn(buf, lastIx.ix);
-            if (!lastIx.newline) {
-                while(fgets(buf, sizeof(buf), regfile) != NULL) {
-                    lastIx = getLastIx(buf);
-                    chunkFn(buf, lastIx.ix);
-                    if (lastIx.newline) {
-                        if (regInList) { postFn(); }
-                        break;
-                    }
-                }
+            while(!lastIx.newline && fgets(buf, sizeof(buf), regfile) != NULL) {
+                lastIx = getLastIx(buf);
+                chunkFn(buf, lastIx.ix);
             }
             postFn();
         } else {
@@ -135,6 +124,83 @@ Err foreachReg(
             return -1;
         }
     }
+    return Ok;
+}
+
+typedef struct { char* buf; size_t sz; Err e; } SizedBuf;
+
+SizedBuf readFile(Mem m[static 1], FILE* f) {
+    if (fseek(f, 0, SEEK_END) != 0) { 
+        fprintf(stderr, "Could not seek regfile end.");
+        return (SizedBuf) { .buf=0x0, .sz=0, .e=errno};
+    }
+
+    size_t len = ftell(f);
+    if (len < 0) { 
+        fprintf(stderr, "Could not ftell the end position of regfile.");
+        return (SizedBuf) {.buf=0x0, .sz=0, .e=errno};
+    }
+    rewind(f);
+    char* contents = memAlloc(m, len + 1);
+    if (!contents) {
+        fprintf(stderr, "Could not alloc memory for regfile contents.");
+        return (SizedBuf) {.buf=0x0, .sz=0, .e=errno};
+    }
+    size_t read = fread(contents, 1, len,f);
+    if (read != len) {
+        fprintf(stderr, "Regfile could not be read.");
+        return (SizedBuf) { .buf=0x0, .sz=0, .e=errno};
+    }
+    Err ferr = ferror(f);
+    if (ferr) {
+        fprintf(stderr, "There was an error reading regfile");
+        return (SizedBuf) { .buf=0x0, .sz=0, .e=ferr};
+    }
+    contents[len] = 0;
+    return (SizedBuf) { .buf=contents, .sz=len, .e=Ok};
+}
+
+Err updateRegfile(Mem m[static 1]) {
+    FILE* regfile = fopen(getRegfilePath(), "r+");
+    if (!regfile) {
+        fprintf(stderr, "Could not open regfile: %s.", getRegfilePath());
+        return errno;
+    }
+    SizedBuf regsContents = readFile(m, regfile);
+    if (regsContents.e) {
+        fclose(regfile);
+        fprintf(stderr, "Could not read regfile.");
+        return regsContents.e;
+    }
+    rewind(regfile);
+    
+    char* buf[regBufSize];
+    int read;
+    while ((read = fread(buf, 1, regBufSize, stdin))) {
+        if(fwrite(buf, 1, read, regfile) < read) {
+            fclose(regfile);
+            fprintf(stderr, "There was an error writing to regfile");
+            return errno;
+        };
+    }
+    if (ferror(regfile)) {
+        fclose(regfile);
+        fprintf(stderr, "There was an error writing to regfile");
+        return errno;
+    }
+
+    if (fwrite(regsContents.buf, 1, regsContents.sz, regfile) < regsContents.sz) {
+        fclose(regfile);
+        fprintf(stderr, "There was an error writing to regfile");
+        return errno;
+    };
+    if (ferror(regfile)) {
+        fclose(regfile);
+        fprintf(stderr, "There was an error writing to regfile.");
+        return errno;
+    }
+
+    fclose(regfile);
     return Ok;
 }
 
