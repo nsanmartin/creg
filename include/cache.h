@@ -5,10 +5,16 @@
 
 #include <mem.h>
 
+enum { NRegsBound = 256 /*more than enough*/ };
+
 typedef struct {
     char* buf;
     size_t bufsz;
-    size_t reg[256 /*more than enough*/];
+    size_t reg[NRegsBound];
 } RegsCache;
 
+
+Err initRegsCache(Mem m[static 1], RegsCache rc[static 1], size_t sz);
+Err regsCacheCopyChunk(RegsCache regsCache[static 1], size_t offset[static 1], char* src, size_t n);
+SizedBuf regsCacheReg(RegsCache regsCache[static 1], size_t regindex);
 #endif

@@ -6,6 +6,9 @@
 #include <opt-parse.h>
 #include <store.h>
 
+;
+Err testSplit(Mem m[static 1]);
+///
 void printChunk(const char* chunk, size_t len) {
     fwrite(chunk, 1, len, stdout);
 }
@@ -27,6 +30,12 @@ int main(int argc, const char* argv[]) {
     }
 
     e = Ok;
+
+    ///
+    //testSplit(&mem); 
+    //return -1;
+    ///
+
     CliInput* cli = opt_parse(&mem, argc, argv);
     if (cli) {
         switch(cli->tag) {
@@ -35,8 +44,12 @@ int main(int argc, const char* argv[]) {
                 break;
             case RegsInputTag:
                 for (int i = 0; i < cli->regs.n; ++i) {
-                    e = foreachReg(cli->regs.regs[i], skipPre, printChunk, printPostSpace);
-                    fwrite("\n", 1, 1, stdout);
+                    if (printRegs(&mem, cli->regs.regs[i]) == Ok) {
+                        fwrite("\n", 1, 1, stdout);
+                    } else {
+                        fprintf(stderr, "Aborting.");
+                        break;
+                    }
                 }
                 break;
             case RegsInputSepTag:

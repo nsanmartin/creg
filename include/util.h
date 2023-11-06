@@ -18,6 +18,8 @@
                 __func__)
 
 typedef int Err;
+typedef int regix_t;
+typedef struct { char* buf; size_t sz; Err e; } SizedBuf;
 
 enum { Ok = 0 } ;
 #endif

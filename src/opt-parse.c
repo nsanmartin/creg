@@ -80,7 +80,6 @@ CliInput* opt_parse(Mem m[static 1], int argc, const char* argv[]) {
                return newRegsInputSep(m, &argv[optind], argc-optind, s);
            }
        default: /* '?' */
-           //print_help(argv[0],"unknown opt");
            print_help(argv[0],"");
            return 0x0;
        }

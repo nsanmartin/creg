@@ -1,6 +1,8 @@
 #ifndef __STORE_H_
 #define __STORE_H_
 
+#include <stdbool.h>
+
 #include <util.h>
 #include <mem.h>
 
@@ -16,4 +18,6 @@ Err foreachReg(
 
 //char* readRegfile(Mem m[static 1]);
 Err updateRegfile(Mem m[static 1]);
+Err printRegs(Mem m[static 1], const char* regs);
+static inline bool isRegIxValid(regix_t ix) { return ix >= 0; }
 #endif

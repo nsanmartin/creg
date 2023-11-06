@@ -6,12 +6,16 @@
 
 #include <store.h>
 #include <mem.h>
+#include <cache.h>
+#include <reg-string.h>
+
 
 enum { regFilePathMaxLen = 1000, regBufSize = 4000 };
 
 
 const char _regFileName[] = "/.reg/regfile";
 const char _queryRegs[]     = "0123456789abcdefghijklmnopqrstuvwxyz";
+regix_t _regindex[NRegsBound] = {0};
 
 char _regFilePath[regFilePathMaxLen] = {0};
 
@@ -32,6 +36,17 @@ const char* getRegfilePath(void) {
         strncpy(&_regFilePath[len], _regFileName, sizeof(_regFileName));
     }
     return _regFilePath;
+}
+
+regix_t getRegIx(const char c){
+    if (_regindex[_queryRegs[1]] == 0) {
+        memset(_regindex, -1, NRegsBound);
+        size_t ix = 0;
+        for (size_t ix = 0 ; _queryRegs[ix]; ++ix) {
+            _regindex[_queryRegs[ix]] = ix;
+        }
+    }
+    return _regindex[c];
 }
 
 typedef struct { bool newline; size_t ix; } LastIx;
@@ -127,7 +142,6 @@ Err foreachReg(
     return Ok;
 }
 
-typedef struct { char* buf; size_t sz; Err e; } SizedBuf;
 
 SizedBuf readFile(Mem m[static 1], FILE* f) {
     if (fseek(f, 0, SEEK_END) != 0) { 
@@ -201,12 +215,7 @@ Err updateRegfile(Mem m[static 1]) {
 }
 
 
-Err readRegs(
-        void(*preFn)(const char),
-        void(*chunkFn)(const char*, size_t len),
-        void(*postFn)(void)
-    )
-{
+Err readRegs(RegsCache regsCache[static 1]) {
     FILE* regfile = fopen(getRegfilePath(), "r");
     if (!regfile) {
         perror("Could not read regfile.");
@@ -215,25 +224,96 @@ Err readRegs(
 
     char buf[regBufSize];
     size_t regindex = 0;
-
+    size_t offset = 0;
+    regsCache->reg[regindex] = offset;
 
     while(fgets(buf, sizeof(buf), regfile) != NULL && regindex < sizeof(_queryRegs)) {
-        char reg = _queryRegs[regindex];
         LastIx lastIx = getLastIx(buf);
 
-        preFn(reg);
-        chunkFn(buf, lastIx.ix);
+        if (regsCacheCopyChunk(regsCache, &offset, buf, lastIx.ix)) {
+            return -1;
+        };
 
         while(!lastIx.newline && fgets(buf, sizeof(buf), regfile) != NULL) {
             lastIx = getLastIx(buf);
-            chunkFn(buf, lastIx.ix);
+            if (regsCacheCopyChunk(regsCache, &offset, buf, lastIx.ix)) {
+                return -1;
+            };
         }
-        postFn();
         regindex++;
+        regsCache->buf[offset++] = ' ';
+        regsCache->reg[regindex] = offset;
     }
     
-    
     fclose(regfile);
+    while (++regindex < NRegsBound) {
+        regsCache->reg[regindex] = offset;
+    }
 
     return Ok;
+}
+
+Err printRegs(Mem m[static 1], const char* regs) {
+    if (regs) {
+        RegsCache regsCache;
+        if (!initRegsCache(m, &regsCache, 8000)) {
+            if (!readRegs(&regsCache)) {
+                for (;*regs; ++regs) {
+                    regix_t ix = getRegIx(*regs);
+                    if (!isRegIxValid(ix)) { fprintf(stderr, "Bad registed"); }
+                    else {
+                        SizedBuf buf = regsCacheReg(&regsCache, ix+1);
+                        if (buf.e) { fprintf(stderr, "Error reading reg"); }
+                        else {
+                            if (buf.sz > 1) {
+                                fwrite(buf.buf, 1, buf.sz, stdout);
+                            } else {
+                                fprintf(stderr, "Empty ref: %c\n", *regs);
+                            }
+                        }
+                    }
+                }
+                return Ok;
+            } else {
+                fprintf(stderr, "Could not read regs\n");
+            }
+        }
+    }
+    return -1;
+}
+
+Err testSplit(Mem m[static 1]) {
+    RegsCache regsCache;
+    if (!initRegsCache(m, &regsCache, 8000)) {
+        if (!readRegs(&regsCache)) {
+            for (size_t ix = 0; ix < 10; ++ix) {
+                SizedBuf buf = regsCacheReg(&regsCache, ix);
+                if (buf.e) { fprintf(stderr, "Error reading reg"); }
+                else {
+                    if (buf.sz > 1) {
+                        StrView subs = (StrView) { .cs=" ", .sz=1};
+                        StrView s = (StrView) { .cs=buf.buf, .sz=buf.sz};
+                        while (s.sz > 0) {
+                            StrView search = findSubStrViewIx(s, subs);
+                            s.sz -= search.sz + search.cs - s.cs ;
+                            s.cs = search.cs + search.sz;
+                            if (search.sz > 0) {
+                                fwrite(search.cs, 1, search.sz, stdout);
+                                fwrite("\n", 1, 1, stdout);
+                            } else {
+                                break;
+                            }
+                        }
+                        
+                    } else {
+                        fprintf(stderr, "Empty ref: %ld\n", ix);
+                    }
+                }
+            }
+            return Ok;
+        } else {
+            fprintf(stderr, "Could not read regs\n");
+        }
+    }
+    return -1;
 }
