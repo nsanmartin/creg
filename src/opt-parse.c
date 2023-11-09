@@ -24,12 +24,12 @@ CliInput* newStdInput(Mem m[static 1]) {
     return rv;
 }
 
-CliInput* newRegsInput(Mem m[static 1], const char** q, size_t n) {
+CliInput* newQueriesInput(Mem m[static 1], const char** q, size_t n) {
     CliInput* rv = memAlloc(m, sizeof(*rv));
     if (!rv) { return 0x0;}
     *rv = (CliInput) {
-        .tag=RegsInputTag,
-        .regs=(RegsInput) {
+        .tag=QueriesInputTag,
+        .regs=(QueriesInput) {
             .regs=q,
             .n=n
         }
@@ -37,12 +37,12 @@ CliInput* newRegsInput(Mem m[static 1], const char** q, size_t n) {
     return rv;
 }
 
-CliInput* newRegsInputSep(Mem m[static 1], const char** q, size_t n, const char* s) {
+CliInput* newQueriesSepInput(Mem m[static 1], const char** q, size_t n, const char* s) {
     CliInput* rv = memAlloc(m, sizeof(*rv));
     if (!rv) { return 0x0;}
     *rv = (CliInput) {
-        .tag=RegsInputSepTag,
-        .regsSep=(RegsInputSep) {
+        .tag=QueriesSepInputTag,
+        .regsSep=(QueriesSepInput) {
             .regs=q,
             .n=n,
             .sep=s
@@ -100,7 +100,7 @@ bool isStdInInput(int argc, const char* argv[]) {
 CliInput* opt_parse(Mem m[static 1], int argc, const char* argv[]) {
     if (isPrintInput(argc, argv)) { return newPrintInput(m); }
     else if (isStdInInput(argc, argv)) { return newStdInput(m); }
-    else if (isAllQueriesInput(argc, argv)) { return newRegsInput(m, argv + 1, argc); }
+    else if (isAllQueriesInput(argc, argv)) { return newQueriesInput(m, argv + 1, argc); }
     else if (isHelpInput(argc, argv)) {
         print_help(argv[0], "");
         return 0x0;
@@ -108,7 +108,7 @@ CliInput* opt_parse(Mem m[static 1], int argc, const char* argv[]) {
     else if (isAllQueriesSepInput(argc, argv)) {
         fprintf(stderr, "Not implemented\n");
         return 0x0;
-        ///return newRegsInputSep(m, argv + 1, argc);
+        ///return newQueriesSepInput(m, argv + 1, argc);
     }
 
     fprintf(stderr, "Bad input\n");

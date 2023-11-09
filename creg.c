@@ -42,7 +42,7 @@ int main(int argc, const char* argv[]) {
             case StdInputTag:
                 e = updateRegfile(&mem);
                 break;
-            case RegsInputTag:
+            case QueriesInputTag:
                 for (int i = 0; i < cli->regs.n; ++i) {
                     if (printRegs(&mem, cli->regs.regs[i]) == Ok) {
                         fwrite("\n", 1, 1, stdout);
@@ -52,7 +52,7 @@ int main(int argc, const char* argv[]) {
                     }
                 }
                 break;
-            case RegsInputSepTag:
+            case QueriesSepInputTag:
                 puts("qery with sep");
                 break;
             case PrintInputTag: 

@@ -5,20 +5,20 @@
 
 #include <mem.h>
 
-typedef enum { StdInputTag, RegsInputTag, RegsInputSepTag, PrintInputTag } CliInputTag;
+typedef enum { StdInputTag, QueriesInputTag, QueriesSepInputTag, PrintInputTag } CliInputTag;
 
 typedef struct {} StdInput;
-typedef struct { const char** regs; size_t n; } RegsInput;
-typedef struct { const char** regs; size_t n; const char* sep; } RegsInputSep;
+typedef struct { const char** regs; size_t n; } QueriesInput;
+typedef struct { const char** regs; size_t n; const char* sep; } QueriesSepInput;
 typedef struct {} PrintInput;
 
 typedef struct {
     CliInputTag tag;
     union {
-        StdInput      std;
-        RegsInput     regs;
-        RegsInputSep  regsSep;
-        PrintInput    print;
+        StdInput         std;
+        QueriesInput        regs;
+        QueriesSepInput  regsSep;
+        PrintInput       print;
     };
 } CliInput;
 
