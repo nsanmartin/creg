@@ -5,9 +5,12 @@
 
 #include <mem.h>
 
-typedef enum { StdInputTag, QueriesInputTag, QueriesSepInputTag, PrintInputTag } CliInputTag;
+typedef enum {
+    StdInputTag, QueriesInputTag, QueriesSepInputTag, PrintInputTag, HelpInputTag
+} CliInputTag;
 
 typedef struct {} StdInput;
+typedef struct {} HelpInput;
 typedef struct { const char** regs; size_t n; } QueriesInput;
 typedef struct { const char** regs; size_t n; const char* sep; } QueriesSepInput;
 typedef struct {} PrintInput;
@@ -15,10 +18,10 @@ typedef struct {} PrintInput;
 typedef struct {
     CliInputTag tag;
     union {
-        StdInput         std;
-        QueriesInput        regs;
+        QueriesInput     regs;
         QueriesSepInput  regsSep;
-        PrintInput       print;
+        //StdInput         std;
+        //PrintInput       print;
     };
 } CliInput;
 

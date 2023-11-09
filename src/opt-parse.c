@@ -10,6 +10,13 @@
 
 const char* optstring = "s:ph";
 
+CliInput* newHelpInput(Mem m[static 1]) {
+    CliInput* rv = memAlloc(m, sizeof(*rv));
+    if (!rv) { return 0x0;}
+    *rv = (CliInput) { .tag=HelpInputTag };
+    return rv;
+}
+
 CliInput* newPrintInput(Mem m[static 1]) {
     CliInput* rv = memAlloc(m, sizeof(*rv));
     if (!rv) { return 0x0;}
@@ -51,12 +58,6 @@ CliInput* newQueriesSepInput(Mem m[static 1], const char** q, size_t n, const ch
     return rv;
 }
 
-void print_help(const char* prog, const char* err_msg) {
-    if (err_msg) {
-        fprintf(stderr,"%s\n", err_msg);
-    }
-    fprintf(stdout, "usage: %s [-psh] [0-9a-zA-z]\n", prog);
-}
 
 bool isPrintInput(int argc, const char* argv[]) { // just: -p
     return argc == 2 && strcmp("-p", argv[1]) == 0;
@@ -101,10 +102,7 @@ CliInput* opt_parse(Mem m[static 1], int argc, const char* argv[]) {
     if (isPrintInput(argc, argv)) { return newPrintInput(m); }
     else if (isStdInInput(argc, argv)) { return newStdInput(m); }
     else if (isAllQueriesInput(argc, argv)) { return newQueriesInput(m, argv + 1, argc); }
-    else if (isHelpInput(argc, argv)) {
-        print_help(argv[0], "");
-        return 0x0;
-    }
+    else if (isHelpInput(argc, argv)) { return newHelpInput(m); }
     else if (isAllQueriesSepInput(argc, argv)) {
         fprintf(stderr, "Not implemented\n");
         return 0x0;

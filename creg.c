@@ -20,6 +20,13 @@ void regTooLargefn(void) { puts("\t\033[91m""\\...""\033[0m"); }
 
 void skipPre(const char reg) { }
 
+void print_help(const char* prog, const char* err_msg) {
+    if (err_msg) {
+        fprintf(stderr,"%s\n", err_msg);
+    }
+    fprintf(stdout, "usage: %s [-psh] [0-9a-zA-z]\n", prog);
+}
+
 int main(int argc, const char* argv[]) {
 
     Mem mem = (Mem) { .tag=DumbMemTag };
@@ -57,6 +64,9 @@ int main(int argc, const char* argv[]) {
                 break;
             case PrintInputTag: 
                 e = foreachReg("", printPreReg, printChunk, printPostLn);
+                break;
+            case HelpInputTag:
+                print_help(argv[0], "");
                 break;
             default: LOG_INVALID_TAG;
         }
