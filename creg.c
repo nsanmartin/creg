@@ -46,7 +46,7 @@ int main(int argc, const char* argv[]) {
     CliInput* cli = opt_parse(&mem, argc, argv);
     if (cli) {
         switch(cli->tag) {
-            case StdInputTag:
+            case StdinInputTag:
                 e = updateRegfile(&mem);
                 break;
             case QueriesInputTag:

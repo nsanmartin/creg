@@ -24,10 +24,10 @@ CliInput* newPrintInput(Mem m[static 1]) {
     return rv;
 }
 
-CliInput* newStdInput(Mem m[static 1]) {
+CliInput* newStdinInput(Mem m[static 1]) {
     CliInput* rv = memAlloc(m, sizeof(*rv));
     if (!rv) { return 0x0;}
-    *rv = (CliInput) { .tag=StdInputTag };
+    *rv = (CliInput) { .tag=StdinInputTag };
     return rv;
 }
 
@@ -100,7 +100,7 @@ bool isStdInInput(int argc, const char* argv[]) {
 
 CliInput* opt_parse(Mem m[static 1], int argc, const char* argv[]) {
     if (isPrintInput(argc, argv)) { return newPrintInput(m); }
-    else if (isStdInInput(argc, argv)) { return newStdInput(m); }
+    else if (isStdInInput(argc, argv)) { return newStdinInput(m); }
     else if (isAllQueriesInput(argc, argv)) { return newQueriesInput(m, argv + 1, argc); }
     else if (isHelpInput(argc, argv)) { return newHelpInput(m); }
     else if (isAllQueriesSepInput(argc, argv)) {
