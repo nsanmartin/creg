@@ -68,7 +68,7 @@ int main(int argc, const char* argv[]) {
                 
                 size_t from = 0;
 
-                for (size_t i = 0; i < regs.regMax; ++i) {
+                for (size_t i = 0; i < regs.nregs; ++i) {
                     const size_t to = regs.ncols[i];
                     for (size_t j = from; j < to; ++j) {
                         const char* beg = regs.items[j];
@@ -79,6 +79,11 @@ int main(int argc, const char* argv[]) {
                     from = to;
                     fwrite("\n", 1, 1, stdout);
                 }
+                QueryResult qr = queryRegItem(&regs, 5, 5);
+                if (qr.valid) {
+                    fwrite(qr.b, 1, qr.sz, stdout);
+                }
+
                 break;
             case PrintInputTag: 
                 e = foreachReg("", printPreReg, printChunk, printPostLn);

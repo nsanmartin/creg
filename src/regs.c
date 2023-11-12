@@ -14,7 +14,7 @@ Err initRegs(Mem m[static 1], Regs rc[static 1], size_t sz) {
         .reg={0},
         .ncols={0},
         .items={0},
-        .regMax=0
+        .nregs=0
     };
     return Ok;
 }
@@ -69,8 +69,22 @@ Err readRegs(Regs regs[static 1]) {
         }
     }
     
-    regs->regMax = regindex;
+    regs->nregs = regindex;
     fclose(regfile);
 
     return Ok;
 }
+
+QueryResult queryRegItem(Regs r[static 1], size_t row, size_t col) {
+    QueryResult res = (QueryResult){.valid=false};
+    if (row < r->nregs) {
+        size_t prev = row ? r->ncols[row-1] :0;
+        if (col < r->ncols[row] - prev) {
+            res.b  = r->items[prev + col];
+            res.sz = r->items[prev + col + 1] - res.b;
+            res.valid = true;
+        }
+    }
+    return res;
+}
+
