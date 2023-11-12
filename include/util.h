@@ -19,6 +19,7 @@
 
 typedef int Err;
 typedef int regix_t;
+typedef struct { char* data; size_t sz; } Array;
 typedef struct { char* buf; size_t sz; Err e; } SizedBuf;
 
 enum { Ok = 0 } ;

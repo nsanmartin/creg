@@ -15,4 +15,5 @@ typedef struct {
 //    size_t seplen;
 //} StrViewSplit;
 StrView findSubStrViewIx(StrView s, StrView subs);
+StrView findNextSubStrOrLastIx(const char* s, StrView sep);
 #endif

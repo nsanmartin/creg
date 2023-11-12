@@ -282,6 +282,43 @@ Err printRegs(Mem m[static 1], const char* regs) {
     return -1;
 }
 
+Err printRegsSplit(Mem m[static 1], const char* regs, const char* s) {
+    RegsCache regsCache;
+    if (!initRegsCache(m, &regsCache, 8000)) {
+        if (!readRegs(&regsCache)) {
+            for (;*regs; ++regs) {
+                regix_t ix = getRegIx(*regs);
+                SizedBuf buf = regsCacheReg(&regsCache, ix);
+                if (buf.e) { fprintf(stderr, "Error reading reg"); }
+                else {
+                    if (buf.sz > 1) {
+                        StrView subs = (StrView) { .cs=s, .sz=1};
+                        StrView s = (StrView) { .cs=buf.buf, .sz=buf.sz};
+                        while (s.sz > 0) {
+                            StrView search = findSubStrViewIx(s, subs);
+                            s.sz -= search.sz + search.cs - s.cs ;
+                            s.cs = search.cs + search.sz;
+                            if (search.sz > 0) {
+                                fwrite(search.cs, 1, search.sz, stdout);
+                                fwrite("\n", 1, 1, stdout);
+                            } else {
+                                break;
+                            }
+                        }
+                        
+                    } else {
+                        fprintf(stderr, "Empty ref: %d\n", ix);
+                    }
+                }
+            }
+            return Ok;
+        } else {
+            fprintf(stderr, "Could not read regs\n");
+        }
+    }
+    return -1;
+}
+
 Err testSplit(Mem m[static 1]) {
     RegsCache regsCache;
     if (!initRegsCache(m, &regsCache, 8000)) {
@@ -317,3 +354,48 @@ Err testSplit(Mem m[static 1]) {
     }
     return -1;
 }
+
+
+Err readRegsMat(RegsMat regs[static 1]) {
+    FILE* regfile = fopen(getRegfilePath(), "r");
+    if (!regfile) {
+        perror("Could not read regfile.");
+        return -1;
+    }
+
+    char buf[regBufSize] = {0};
+    size_t regindex = 0;
+    size_t offset = 0;
+    regs->reg[regindex] = offset;
+    StrView sep = (StrView){.cs=" ", .sz=1};
+
+    size_t ncols = 0;
+    while(fgets(buf, sizeof(buf), regfile) != NULL
+            && regindex < sizeof(_queryRegs))
+    {
+        StrView next = (StrView){.cs=buf, .sz=0};
+        do {
+            next = findNextSubStrOrLastIx(next.cs+next.sz, sep);
+            if (*next.cs == '\n') { break; }
+            regs->cols[ncols] = &regs->buf.data[offset];
+            ncols += next.sz ? 1: 0;
+            if (regsMatCopyChunk(regs, &offset, next.cs, next.sz)) {
+                perror("could not copy reg");
+                return -1;
+            };
+        } while (next.sz > 0);
+
+        regs->regColCount[regindex] = ncols;
+
+        if (next.sz == 1 && *next.cs == '\n') { /* end of line */
+            regindex++;
+            regs->reg[regindex] = offset;
+        }
+    }
+    
+    regs->regMax = regindex;
+    fclose(regfile);
+
+    return Ok;
+}
+

@@ -2,6 +2,29 @@
 
 #include <reg-string.h>
 
+
+/**
+ * \n not in s and s is not empty
+ */
+StrView findNextSubStrOrLastIx(const char* s, StrView sep) {
+
+    while (strncmp(s, sep.cs, sep.sz) == 0) { s += sep.sz; }
+
+    StrView res = (StrView) { .cs=s, .sz=0 };
+    if (!*s) { /* return empty string */ return res; }
+    else if (*s == '\n') {
+        res.sz = 1;
+        return res;
+    }
+
+    ++s;
+
+    for (; *s && *s != '\n' && strncmp(s, sep.cs, sep.sz) != 0; ++s)
+        ;
+    res.sz = s-res.cs;
+    return res;
+}
+
 // return the index of first occurence od substr, or end if not found
 StrView findSubStrViewIx(StrView s, StrView sep) {
     StrView res = (StrView) { .cs=s.cs, .sz=s.sz};
@@ -9,7 +32,8 @@ StrView findSubStrViewIx(StrView s, StrView sep) {
     if (sep.sz < s.sz) {
         size_t i = 0;
 
-        while (i < s.sz - sep.sz && (strncmp(s.cs+i,sep.cs,sep.sz) == 0)) { i += sep.sz; }
+        while (i < s.sz - sep.sz
+                && (strncmp(s.cs+i,sep.cs,sep.sz) == 0)) { i += sep.sz; }
         res.cs += i; 
         res.sz -= i;
         beg = i;

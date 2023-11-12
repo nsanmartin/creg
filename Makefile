@@ -5,6 +5,7 @@ BUILD:=build
 OBJDIR:=build
 INCLUDE:=include
 SRCDIR:=src
+TESTSDIR:=tests
 
 HEADERS:=$(wildcard include/*.h)
 SRCS:=$(wildcard $(SRCDIR)/*.c)
@@ -17,6 +18,10 @@ creg: creg.c $(OBJ)
 
 $(OBJDIR)/%.o: $(SRCDIR)/%.c $(HEADERS)
 	$(CC) $(STRICT_CFLAGS) $(CFLAGS) -I$(INCLUDE) -c -o $@  $<
+
+$(TESTSDIR)/%: $(TESTSDIR)/%.c $(OBJ)
+	$(CC) $(STRICT_CFLAGS) $(CFLAGS) -I$(INCLUDE) \
+		-o $(BUILD)/$@ $^
 
 clean:
 	find $(BUILD) -type f -delete

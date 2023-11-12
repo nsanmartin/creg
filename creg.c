@@ -1,6 +1,7 @@
 #include <string.h>
 #include <stdlib.h>
 
+#include <cache.h>
 #include <util.h>
 #include <mem.h>
 #include <opt-parse.h>
@@ -60,7 +61,24 @@ int main(int argc, const char* argv[]) {
                 }
                 break;
             case QueriesSepInputTag:
-                puts("qery with sep");
+                RegsMat regs;
+                if (!initRegsMat(&mem, &regs, 8000)) {
+                    readRegsMat(&regs);
+                }
+                
+                size_t from = 0;
+
+                for (size_t i = 0; i < regs.regMax; ++i) {
+                    const size_t to = regs.regColCount[i];
+                    for (size_t j = from; j < to; ++j) {
+                        const char* beg = regs.cols[j];
+                        size_t len = regs.cols[j+1] - beg;
+                        fwrite(beg, 1, len, stdout);
+                        fwrite(" ", 1, 1, stdout);
+                    }
+                    from = to;
+                    fwrite("\n", 1, 1, stdout);
+                }
                 break;
             case PrintInputTag: 
                 e = foreachReg("", printPreReg, printChunk, printPostLn);
