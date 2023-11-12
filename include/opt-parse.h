@@ -11,15 +11,15 @@ typedef enum {
 
 typedef struct {} StdinInput;
 typedef struct {} HelpInput;
-typedef struct { const char** regs; size_t n; } QueriesInput;
-typedef struct { const char** regs; size_t n; const char* sep; } QueriesSepInput;
+typedef struct { const char** queries; size_t n; } QueriesInput;
+typedef struct { const char** queries; size_t n; const char* sep; } QueriesSepInput;
 typedef struct {} PrintInput;
 
 typedef struct {
     CliInputTag tag;
     union {
-        QueriesInput     regs;
-        QueriesSepInput  regsSep;
+        QueriesInput     queries;
+        QueriesSepInput  queriesSep;
     };
 } CliInput;
 

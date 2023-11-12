@@ -1,3 +1,4 @@
+#include <ctype.h>
 #include <string.h>
 
 #include <regs.h>
@@ -75,7 +76,7 @@ Err readRegs(Regs regs[static 1]) {
     return Ok;
 }
 
-QueryResult queryRegItem(Regs r[static 1], size_t row, size_t col) {
+QueryResult queryRegItem(const Regs r[static 1], size_t row, size_t col) {
     QueryResult res = (QueryResult){.valid=false};
     if (row < r->nregs) {
         size_t prev = row ? r->ncols[row-1] :0;
@@ -88,3 +89,50 @@ QueryResult queryRegItem(Regs r[static 1], size_t row, size_t col) {
     return res;
 }
 
+Err fillQuery(const char* q, ArraySizeT* rs, ArraySizeT* cs) {
+    if (!q) { return -1; }
+    size_t reg = 0;
+    for(; *q; ++q) {
+        if (*q == '.') { break; }
+        if (reg >= rs->sz) { return -1; }
+        rs->data[reg++] = getRegIx(*q);
+    }
+    rs->sz = reg;
+    
+    //skip dot
+    if (!*q++ || !*q) { return -1; }
+
+    size_t col = 0;
+    for(; *q; ++q) {
+        if (col >= cs->sz) { return -1; }
+        if (isdigit(*q)) {
+            cs->data[col++] = *q - '0';
+        } else if (islower(*q)) {
+            cs->data[col++] = *q - 'a';
+        } else {
+            return -1;
+        }
+    }
+    cs->sz = col;
+     return Ok;
+}
+
+Err printQuery(const Regs r[static 1], const char* q) {
+    size_t rbuf[100];
+    size_t cbuf[100];
+    ArraySizeT rs = {.data=rbuf, .sz=100};
+    ArraySizeT cs = {.data=cbuf, .sz=100};
+
+    Err e = fillQuery(q, &rs, &cs);
+    if (e) { return e; }
+
+    for (size_t i = 0; i < rs.sz; ++i) {
+        for (size_t j = 0; j < cs.sz; ++j) {
+            QueryResult qr = queryRegItem(r, rs.data[i], cs.data[j]);
+            if (qr.valid) {
+                fwrite(qr.b, 1, qr.sz, stdout);
+                fwrite(" ", 1, 1, stdout);
+            }
+        }
+    }
+}

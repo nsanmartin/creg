@@ -29,5 +29,6 @@ Err initRegs(Mem m[static 1], Regs rc[static 1], size_t sz);
 Err regsCopyChunk(Regs regs[static 1], size_t offset[static 1], const char* src, size_t n);
 Err readRegs(Regs regs[static 1]);
 
-QueryResult queryRegItem(Regs r[static 1], size_t row, size_t col);
+QueryResult queryRegItem(const Regs r[static 1], size_t row, size_t col);
+Err printQuery(const Regs r[static 1], const char* q);
 #endif

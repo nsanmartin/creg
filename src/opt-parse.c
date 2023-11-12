@@ -36,8 +36,8 @@ CliInput* newQueriesInput(Mem m[static 1], const char** q, size_t n) {
     if (!rv) { return 0x0;}
     *rv = (CliInput) {
         .tag=QueriesInputTag,
-        .regs=(QueriesInput) {
-            .regs=q,
+        .queries=(QueriesInput) {
+            .queries=q,
             .n=n
         }
     };
@@ -49,8 +49,8 @@ CliInput* newQueriesSepInput(Mem m[static 1], const char** q, size_t n, const ch
     if (!rv) { return 0x0;}
     *rv = (CliInput) {
         .tag=QueriesSepInputTag,
-        .regsSep=(QueriesSepInput) {
-            .regs=q,
+        .queriesSep=(QueriesSepInput) {
+            .queries=q,
             .n=n,
             .sep=s
         }
@@ -113,7 +113,7 @@ CliInput* opt_parse(Mem m[static 1], int argc, const char* argv[]) {
             const char* s = argv[sepIndex];
             argv[sepIndex] = argv[1];
             fprintf(stderr, "Not implemented\n");
-            return newQueriesSepInput(m, argv + 1, argc, s);
+            return newQueriesSepInput(m, argv + 2, argc-2, s);
         }
     }
 

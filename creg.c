@@ -51,8 +51,8 @@ int main(int argc, const char* argv[]) {
                 e = updateRegfile(&mem);
                 break;
             case QueriesInputTag:
-                for (int i = 0; i < cli->regs.n; ++i) {
-                    if (printRegs(&mem, cli->regs.regs[i]) == Ok) {
+                for (int i = 0; i < cli->queries.n; ++i) {
+                    if (printRegs(&mem, cli->queries.queries[i]) == Ok) {
                         fwrite("\n", 1, 1, stdout);
                     } else {
                         fprintf(stderr, "Aborting.");
@@ -79,9 +79,11 @@ int main(int argc, const char* argv[]) {
                     from = to;
                     fwrite("\n", 1, 1, stdout);
                 }
-                QueryResult qr = queryRegItem(&regs, 5, 5);
-                if (qr.valid) {
-                    fwrite(qr.b, 1, qr.sz, stdout);
+
+                for (int i = 0; i < cli->queries.n; ++i) {
+                    const char* q = cli->queries.queries[i];
+                    Err e = printQuery(&regs, q);
+                    fwrite("\n", 1, 1, stdout);
                 }
 
                 break;
