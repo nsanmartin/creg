@@ -356,7 +356,7 @@ Err testSplit(Mem m[static 1]) {
 }
 
 
-Err readRegsMat(RegsMat regs[static 1]) {
+Err readRegsMat(Regs regs[static 1]) {
     FILE* regfile = fopen(getRegfilePath(), "r");
     if (!regfile) {
         perror("Could not read regfile.");
@@ -377,7 +377,7 @@ Err readRegsMat(RegsMat regs[static 1]) {
         do {
             next = findNextSubStrOrLastIx(next.cs+next.sz, sep);
             if (*next.cs == '\n') { break; }
-            regs->cols[ncols] = &regs->buf.data[offset];
+            regs->items[ncols] = &regs->buf.data[offset];
             ncols += next.sz ? 1: 0;
             if (regsMatCopyChunk(regs, &offset, next.cs, next.sz)) {
                 perror("could not copy reg");
@@ -385,7 +385,7 @@ Err readRegsMat(RegsMat regs[static 1]) {
             };
         } while (next.sz > 0);
 
-        regs->regColCount[regindex] = ncols;
+        regs->ncols[regindex] = ncols;
 
         if (next.sz == 1 && *next.cs == '\n') { /* end of line */
             regindex++;

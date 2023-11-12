@@ -61,7 +61,7 @@ int main(int argc, const char* argv[]) {
                 }
                 break;
             case QueriesSepInputTag:
-                RegsMat regs;
+                Regs regs;
                 if (!initRegsMat(&mem, &regs, 8000)) {
                     readRegsMat(&regs);
                 }
@@ -69,10 +69,10 @@ int main(int argc, const char* argv[]) {
                 size_t from = 0;
 
                 for (size_t i = 0; i < regs.regMax; ++i) {
-                    const size_t to = regs.regColCount[i];
+                    const size_t to = regs.ncols[i];
                     for (size_t j = from; j < to; ++j) {
-                        const char* beg = regs.cols[j];
-                        size_t len = regs.cols[j+1] - beg;
+                        const char* beg = regs.items[j];
+                        size_t len = regs.items[j+1] - beg;
                         fwrite(beg, 1, len, stdout);
                         fwrite(" ", 1, 1, stdout);
                     }

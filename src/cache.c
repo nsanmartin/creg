@@ -2,16 +2,16 @@
 
 #include <cache.h>
 
-Err initRegsMat(Mem m[static 1], RegsMat rc[static 1], size_t sz) {
+Err initRegsMat(Mem m[static 1], Regs rc[static 1], size_t sz) {
     char* buf = memAlloc(m, sz);
     if (!buf) {
         return -1;
     }
-    *rc = (RegsMat) {
+    *rc = (Regs) {
         .buf=(Array){.data=buf, .sz=sz},
         .reg={0},
-        .regColCount={0},
-        .cols={0},
+        .ncols={0},
+        .items={0},
         .regMax=0
     };
     return Ok;
@@ -27,7 +27,7 @@ Err initRegsCache(Mem m[static 1], RegsCache rc[static 1], size_t sz) {
 }
 
 Err regsMatCopyChunk(
-    RegsMat regsMat[static 1], size_t offset[static 1], const char* src, size_t n
+    Regs regsMat[static 1], size_t offset[static 1], const char* src, size_t n
 ) {
     if (*offset + n < regsMat->buf.sz) {
         memcpy(&regsMat->buf.data[*offset], src, n);
