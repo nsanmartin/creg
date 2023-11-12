@@ -6,6 +6,7 @@
 #include <mem.h>
 
 enum { NRegsBound = 256, NItemsBound = 1024 /*more than enough*/ };
+enum { DataBufSz = 4000 };
 
 typedef struct {
     /* [data[beg .. end] slot[ix,len]...] */
@@ -16,7 +17,7 @@ typedef struct {
     size_t regMax;
 } Regs;
 
-Err initRegsMat(Mem m[static 1], Regs rc[static 1], size_t sz);
-Err regsMatCopyChunk(Regs regsMat[static 1], size_t offset[static 1], const char* src, size_t n);
-Err readRegsMat(Regs regsMat[static 1]);
+Err initRegs(Mem m[static 1], Regs rc[static 1], size_t sz);
+Err regsCopyChunk(Regs regs[static 1], size_t offset[static 1], const char* src, size_t n);
+Err readRegs(Regs regs[static 1]);
 #endif

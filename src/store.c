@@ -19,6 +19,8 @@ regix_t _regindex[NRegsBound] = {0};
 
 char _regFilePath[regFilePathMaxLen] = {0};
 
+size_t getRegsCount() { return sizeof(_queryRegs); }
+
 const char* getRegfilePath(void) {
     if (_regFilePath[0] == 0) {
         const char* basedir = getenv("HOME");
@@ -215,7 +217,7 @@ Err updateRegfile(Mem m[static 1]) {
 }
 
 
-Err readRegs(RegsCache regsCache[static 1]) {
+Err readRegsCache(RegsCache regsCache[static 1]) {
     FILE* regfile = fopen(getRegfilePath(), "r");
     if (!regfile) {
         perror("Could not read regfile.");
@@ -257,7 +259,7 @@ Err printRegs(Mem m[static 1], const char* regs) {
     if (regs) {
         RegsCache regsCache;
         if (!initRegsCache(m, &regsCache, 8000)) {
-            if (!readRegs(&regsCache)) {
+            if (!readRegsCache(&regsCache)) {
                 for (;*regs; ++regs) {
                     regix_t ix = getRegIx(*regs);
                     if (!isRegIxValid(ix)) { fprintf(stderr, "Bad registed"); }
@@ -285,7 +287,7 @@ Err printRegs(Mem m[static 1], const char* regs) {
 Err printRegsSplit(Mem m[static 1], const char* regs, const char* s) {
     RegsCache regsCache;
     if (!initRegsCache(m, &regsCache, 8000)) {
-        if (!readRegs(&regsCache)) {
+        if (!readRegsCache(&regsCache)) {
             for (;*regs; ++regs) {
                 regix_t ix = getRegIx(*regs);
                 SizedBuf buf = regsCacheReg(&regsCache, ix);
@@ -322,7 +324,7 @@ Err printRegsSplit(Mem m[static 1], const char* regs, const char* s) {
 Err testSplit(Mem m[static 1]) {
     RegsCache regsCache;
     if (!initRegsCache(m, &regsCache, 8000)) {
-        if (!readRegs(&regsCache)) {
+        if (!readRegsCache(&regsCache)) {
             for (size_t ix = 0; ix < 10; ++ix) {
                 SizedBuf buf = regsCacheReg(&regsCache, ix);
                 if (buf.e) { fprintf(stderr, "Error reading reg"); }
@@ -356,46 +358,4 @@ Err testSplit(Mem m[static 1]) {
 }
 
 
-Err readRegsMat(Regs regs[static 1]) {
-    FILE* regfile = fopen(getRegfilePath(), "r");
-    if (!regfile) {
-        perror("Could not read regfile.");
-        return -1;
-    }
-
-    char buf[regBufSize] = {0};
-    size_t regindex = 0;
-    size_t offset = 0;
-    regs->reg[regindex] = offset;
-    StrView sep = (StrView){.cs=" ", .sz=1};
-
-    size_t ncols = 0;
-    while(fgets(buf, sizeof(buf), regfile) != NULL
-            && regindex < sizeof(_queryRegs))
-    {
-        StrView next = (StrView){.cs=buf, .sz=0};
-        do {
-            next = findNextSubStrOrLastIx(next.cs+next.sz, sep);
-            if (*next.cs == '\n') { break; }
-            regs->items[ncols] = &regs->buf.data[offset];
-            ncols += next.sz ? 1: 0;
-            if (regsMatCopyChunk(regs, &offset, next.cs, next.sz)) {
-                perror("could not copy reg");
-                return -1;
-            };
-        } while (next.sz > 0);
-
-        regs->ncols[regindex] = ncols;
-
-        if (next.sz == 1 && *next.cs == '\n') { /* end of line */
-            regindex++;
-            regs->reg[regindex] = offset;
-        }
-    }
-    
-    regs->regMax = regindex;
-    fclose(regfile);
-
-    return Ok;
-}
 

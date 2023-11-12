@@ -2,20 +2,6 @@
 
 #include <cache.h>
 
-Err initRegsMat(Mem m[static 1], Regs rc[static 1], size_t sz) {
-    char* buf = memAlloc(m, sz);
-    if (!buf) {
-        return -1;
-    }
-    *rc = (Regs) {
-        .buf=(Array){.data=buf, .sz=sz},
-        .reg={0},
-        .ncols={0},
-        .items={0},
-        .regMax=0
-    };
-    return Ok;
-}
 
 Err initRegsCache(Mem m[static 1], RegsCache rc[static 1], size_t sz) {
     char* buf = memAlloc(m, sz);
@@ -24,18 +10,6 @@ Err initRegsCache(Mem m[static 1], RegsCache rc[static 1], size_t sz) {
     }
     *rc = (RegsCache) { .buf=buf, .bufsz=sz, .reg={0} };
     return Ok;
-}
-
-Err regsMatCopyChunk(
-    Regs regsMat[static 1], size_t offset[static 1], const char* src, size_t n
-) {
-    if (*offset + n < regsMat->buf.sz) {
-        memcpy(&regsMat->buf.data[*offset], src, n);
-        *offset += n;
-        return Ok;
-    }
-    fprintf(stderr, "Not enough memory for reg size (%ld)\n", regsMat->buf.sz);
-    return -1;
 }
 
 Err regsCacheCopyChunk(RegsCache regsCache[static 1], size_t offset[static 1], char* src, size_t n) {

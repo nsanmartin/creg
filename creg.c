@@ -62,8 +62,8 @@ int main(int argc, const char* argv[]) {
                 break;
             case QueriesSepInputTag:
                 Regs regs;
-                if (!initRegsMat(&mem, &regs, 8000)) {
-                    readRegsMat(&regs);
+                if (!initRegs(&mem, &regs, 8000)) {
+                    readRegs(&regs);
                 }
                 
                 size_t from = 0;
