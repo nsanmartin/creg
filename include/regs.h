@@ -5,8 +5,13 @@
 #include <stdbool.h>
 
 #include <mem.h>
+#include <reg-string.h>
 
-enum { NRegsBound = 256, NItemsBound = 1024 /*more than enough*/ };
+enum {
+    NRegsBound = 256, /* if changed, update getRegIx */
+    NItemsBound = 1024 /*more than enough*/
+};
+
 enum { DataBufSz = 4000 };
 
 typedef struct {
@@ -15,7 +20,7 @@ typedef struct {
     size_t reg[NRegsBound];
     size_t ncols[NRegsBound];
     char* items[NItemsBound];
-    size_t nregs;
+    regix_t nregs;
 } Regs;
 
 typedef struct {
@@ -27,8 +32,8 @@ typedef struct {
 
 Err initRegs(Mem m[static 1], Regs rc[static 1], size_t sz);
 Err regsCopyChunk(Regs regs[static 1], size_t offset[static 1], const char* src, size_t n);
-Err readRegs(Regs regs[static 1]);
+Err readRegs(Regs regs[static 1], const StrView sep);
 
-QueryResult queryRegItem(const Regs r[static 1], size_t row, size_t col);
+QueryResult queryRegItem(const Regs r[static 1], regix_t row, size_t col);
 Err printQuery(const Regs r[static 1], const char* q);
 #endif

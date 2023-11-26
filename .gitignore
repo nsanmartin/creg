@@ -6,4 +6,5 @@ s.vim
 *.swp
 
 s
+.gdbinit
 

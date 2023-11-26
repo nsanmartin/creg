@@ -1,4 +1,4 @@
-CFLAGS:=-g #-Wall -Wextra -pedantic -Iinclude -Ibdwgc/include
+CFLAGS:=-g -Wall -Wextra -pedantic -Iinclude -Ibdwgc/include
 STRICT_CFLAGS:= #-Werror
 
 BUILD:=build

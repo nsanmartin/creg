@@ -19,7 +19,7 @@ regix_t _regindex[NRegsBound] = {0};
 
 char _regFilePath[regFilePathMaxLen] = {0};
 
-size_t getRegsCount() { return sizeof(_queryRegs); }
+size_t getRegsCount() { return sizeof(_queryRegs) - 1; }
 
 const char* getRegfilePath(void) {
     if (_regFilePath[0] == 0) {
@@ -35,20 +35,23 @@ const char* getRegfilePath(void) {
             return 0x0;
         }
         strncpy(_regFilePath, basedir, len);
-        strncpy(&_regFilePath[len], _regFileName, sizeof(_regFileName));
+        size_t regfilename_size = sizeof(_regFileName);
+        strncpy(&_regFilePath[len], _regFileName, regfilename_size);
     }
     return _regFilePath;
 }
 
 regix_t getRegIx(const char c){
-    if (_regindex[_queryRegs[1]] == 0) {
-        memset(_regindex, -1, NRegsBound);
-        size_t ix = 0;
+    if (_regindex[(size_t)_queryRegs[1]] == 0) {
+        memset(_regindex, -1, NRegsBound * sizeof(*_regindex));
         for (size_t ix = 0 ; _queryRegs[ix]; ++ix) {
-            _regindex[_queryRegs[ix]] = ix;
+            _regindex[(size_t)_queryRegs[ix]] = ix;
         }
     }
-    return _regindex[c];
+    if (c < 0 /* || NRegsBound <= c not needed */ ) {
+        return -1;
+    }
+    return _regindex[(size_t)c];
 }
 
 typedef struct { bool newline; size_t ix; } LastIx;
@@ -82,8 +85,10 @@ size_t charInList(const char reg, const char* list) {
 Err ignoreUntilEol(FILE*f, bool newlineRead) {
     char buf[regBufSize];
     while(!newlineRead && fgets(buf, sizeof(buf), f) != NULL) {
+        //TODO: ceck errors
         newlineRead = getLastIx(buf).newline;
     }
+    return Ok;
 }
 
 /**
@@ -96,7 +101,7 @@ Err foreachReg(
         void(*postFn)(void)
     )
 {
-    bool ignoreStream = false;
+    //bool ignoreStream = false;
 
     FILE* regfile = fopen(getRegfilePath(), "r");
     if (!regfile) {
@@ -111,7 +116,7 @@ Err foreachReg(
     char visited[queryRegsLen];
     bzero(visited, queryRegsLen);
 
-    while(fgets(buf, sizeof(buf), regfile) != NULL && regindex < sizeof(_queryRegs)) {
+    while(fgets(buf, sizeof(buf), regfile) != NULL && regindex < getRegsCount()) {
         char reg = _queryRegs[regindex];
         size_t regIxInQuery = charInList(reg, queryRegs);
         bool regInList = !*queryRegs || regIxInQuery < queryRegsLen;
@@ -135,7 +140,7 @@ Err foreachReg(
     
     fclose(regfile);
 
-    for (int i = 0; i < queryRegsLen; ++i) {
+    for (size_t i = 0; i < queryRegsLen; ++i) {
         if (!visited[i]) {
             fprintf(stderr, "Not register %c!\n", queryRegs[i]);
             return -1;
@@ -151,7 +156,7 @@ SizedBuf readFile(Mem m[static 1], FILE* f) {
         return (SizedBuf) { .buf=0x0, .sz=0, .e=errno};
     }
 
-    size_t len = ftell(f);
+    long len = ftell(f);
     if (len < 0) { 
         perror("Could not ftell the end position of regfile.");
         return (SizedBuf) {.buf=0x0, .sz=0, .e=errno};
@@ -163,7 +168,8 @@ SizedBuf readFile(Mem m[static 1], FILE* f) {
         return (SizedBuf) {.buf=0x0, .sz=0, .e=errno};
     }
     size_t read = fread(contents, 1, len,f);
-    if (read != len) {
+    //TODO: check this cast
+    if (read != (size_t)len) {
         perror("Regfile could not be read.");
         return (SizedBuf) { .buf=0x0, .sz=0, .e=errno};
     }
@@ -191,7 +197,7 @@ Err updateRegfile(Mem m[static 1]) {
     rewind(regfile);
     
     char* buf[regBufSize];
-    int read;
+    size_t read;
     while ((read = fread(buf, 1, regBufSize, stdin))) {
         if(fwrite(buf, 1, read, regfile) < read) {
             fclose(regfile);

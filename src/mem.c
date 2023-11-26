@@ -10,6 +10,7 @@ Err initMem(Mem m[static 1]) {
               return 0;
         default: LOG_INVALID_TAG;
     }
+    return -1;
 }
 
 void* memAlloc(Mem m[static 1], size_t n) {
@@ -34,6 +35,7 @@ void* memAlloc(Mem m[static 1], size_t n) {
               return m->fixedSzGroup.ptr[n++] = buf;
         default: LOG_INVALID_TAG;
     }
+    return 0x0;
 }
 
 Err memCleanup(Mem m[static 1]) {
@@ -44,4 +46,5 @@ Err memCleanup(Mem m[static 1]) {
               return 0;
         default: LOG_INVALID_TAG;
     }
+    return -1;
 }

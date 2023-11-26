@@ -7,7 +7,7 @@
 
 enum { FixedSzGroupMemSz = 100 };
 typedef enum { DumbMemTag, FixedSzGroupMemTag } MemTag;
-typedef struct {} DumbMem;
+//typedef struct {} DumbMem;
 typedef struct {
     void* ptr[FixedSzGroupMemSz];
     size_t n;
@@ -16,7 +16,7 @@ typedef struct {
 typedef struct {
     MemTag tag;
     union {
-        DumbMem         dumb;
+        //DumbMem         dumb;
         FixedSzGroupMem fixedSzGroup;
     };
 } Mem;

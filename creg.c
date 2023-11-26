@@ -6,8 +6,9 @@
 #include <mem.h>
 #include <opt-parse.h>
 #include <store.h>
+#include <reg-string.h>
 
-;
+
 Err testSplit(Mem m[static 1]);
 ///
 void printChunk(const char* chunk, size_t len) {
@@ -19,13 +20,31 @@ void printPostLn(void) { puts(""); }
 void printPostSpace(void) { printf(" "); }
 void regTooLargefn(void) { puts("\t\033[91m""\\...""\033[0m"); }
 
-void skipPre(const char reg) { }
+void skipPre(const char reg) { (void)reg; }
 
 void print_help(const char* prog, const char* err_msg) {
     if (err_msg) {
         fprintf(stderr,"%s\n", err_msg);
     }
     fprintf(stdout, "usage: %s [-psh] [0-9a-zA-z]\n", prog);
+}
+
+Err processQueries(Mem* mem, const char** queries, size_t nqueries, StrView sep) {
+
+    Err e = Ok;
+    Regs regs;
+    if (!initRegs(mem, &regs, 8000)) {
+        e = readRegs(&regs, sep);
+        if (e) { return e; }
+    }
+
+    for (size_t i = 0; i < nqueries; ++i) {
+        const char* q = queries[i];
+        Err e = printQuery(&regs, q);
+        if (e) { return e; }
+        fwrite("\n", 1, 1, stdout);
+    }
+    return e;
 }
 
 int main(int argc, const char* argv[]) {
@@ -39,53 +58,34 @@ int main(int argc, const char* argv[]) {
 
     e = Ok;
 
-    ///
-    //testSplit(&mem); 
-    //return -1;
-    ///
-
     CliInput* cli = opt_parse(&mem, argc, argv);
+
     if (cli) {
         switch(cli->tag) {
             case StdinInputTag:
                 e = updateRegfile(&mem);
                 break;
             case QueriesInputTag:
-                for (int i = 0; i < cli->queries.n; ++i) {
-                    if (printRegs(&mem, cli->queries.queries[i]) == Ok) {
-                        fwrite("\n", 1, 1, stdout);
-                    } else {
-                        fprintf(stderr, "Aborting.");
-                        break;
-                    }
+                e = processQueries(
+                    &mem,
+                    cli->queries.queries,
+                    cli->queries.n,
+                    (StrView){.cs=" ", .sz=1}
+                );
+                if (e != Ok) {
+                    fprintf(stderr, "error processing queries: ");
                 }
                 break;
             case QueriesSepInputTag:
-                Regs regs;
-                if (!initRegs(&mem, &regs, 8000)) {
-                    readRegs(&regs);
+                e = processQueries(
+                    &mem,
+                    cli->queries.queries,
+                    cli->queries.n,
+                    (StrView){.cs=cli->queriesSep.sep, .sz=strlen(cli->queriesSep.sep)}
+                );
+                if (e != Ok) {
+                    fprintf(stderr, "error processing queries: ");
                 }
-                
-                size_t from = 0;
-
-                for (size_t i = 0; i < regs.nregs; ++i) {
-                    const size_t to = regs.ncols[i];
-                    for (size_t j = from; j < to; ++j) {
-                        const char* beg = regs.items[j];
-                        size_t len = regs.items[j+1] - beg;
-                        fwrite(beg, 1, len, stdout);
-                        fwrite(" ", 1, 1, stdout);
-                    }
-                    from = to;
-                    fwrite("\n", 1, 1, stdout);
-                }
-
-                for (int i = 0; i < cli->queries.n; ++i) {
-                    const char* q = cli->queries.queries[i];
-                    Err e = printQuery(&regs, q);
-                    fwrite("\n", 1, 1, stdout);
-                }
-
                 break;
             case PrintInputTag: 
                 e = foreachReg("", printPreReg, printChunk, printPostLn);

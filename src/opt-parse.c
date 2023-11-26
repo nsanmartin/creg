@@ -95,25 +95,27 @@ bool isAllQueriesSepInput(int argc, const char* argv[], int* sepIndex) {
         }
         else if (!isQuery(argv[i])) { return false; }
     }
-    return argc > 2;
+    return argc > 3 && argc > *sepIndex + 1;
 }
 
 bool isStdInInput(int argc, const char* argv[]) {
+    (void)argv;
     return argc == 1;
 }
 
 CliInput* opt_parse(Mem m[static 1], int argc, const char* argv[]) {
     if (isPrintInput(argc, argv)) { return newPrintInput(m); }
     else if (isStdInInput(argc, argv)) { return newStdinInput(m); }
-    else if (isAllQueriesInput(argc, argv)) { return newQueriesInput(m, argv + 1, argc); }
+    else if (isAllQueriesInput(argc, argv)) { return newQueriesInput(m, argv + 1, argc-1); }
     else if (isHelpInput(argc, argv)) { return newHelpInput(m); }
     else { 
         int sepIndex = 0;
         if (isAllQueriesSepInput(argc, argv, &sepIndex)) {
             const char* s = argv[sepIndex];
             argv[sepIndex] = argv[1];
-            fprintf(stderr, "Not implemented\n");
-            return newQueriesSepInput(m, argv + 2, argc-2, s);
+            s = argv[sepIndex+1];
+            argv[sepIndex+1] = argv[2];
+            return newQueriesSepInput(m, argv + 3, argc-3, s);
         }
     }
 
