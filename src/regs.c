@@ -144,6 +144,8 @@ void printQueryIfValid(QueryResult* qr, StrView sep) {
     if (qr->valid) {
         fwrite(qr->b, 1, qr->sz, stdout);
         fwrite(sep.cs, 1, sep.sz, stdout);
+    } else {
+        fprintf(stderr, "invalid query\n");
     }
 }
 
