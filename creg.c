@@ -96,7 +96,11 @@ int main(int argc, const char* argv[]) {
             default: LOG_INVALID_TAG;
         }
         if (e) {
-            fprintf(stderr, "error: %s. Aborting\n", strerror(e));
+            if (e == -1) {
+                fprintf(stderr, "aborting\n");
+            } else {
+                fprintf(stderr, "error: %s. Aborting\n", strerror(e));
+            }
             exit(e);
         }
     }

@@ -24,14 +24,13 @@ Err initRegs(Mem m[static 1], Regs rc[static 1], size_t sz) {
 }
 
 
-Err regsCopyChunk(
-    Regs regs[static 1], size_t offset[static 1], const char* src, size_t n
-) {
+Err regsCopyChunk(Regs regs[static 1], size_t offset[static 1], const char* src, size_t n) {
     if (*offset + n < regs->buf.sz) {
         memcpy(&regs->buf.data[*offset], src, n);
         *offset += n;
         return Ok;
     }
+    //TODO: use dynamic memory and realloc if we need more memory.
     fprintf(stderr, "Not enough memory for reg size (%ld)\n", regs->buf.sz);
     return -1;
 }
@@ -39,7 +38,8 @@ Err regsCopyChunk(
 
 Err readRegs(Regs regs[static 1], const StrView sep) {
     FILE* regfile = fopen(getRegfilePath(), "r");
-    if (!regfile) {
+    Err e = !regfile;
+    if (e) {
         perror("Could not read regfile.");
         return -1;
     }
@@ -58,9 +58,9 @@ Err readRegs(Regs regs[static 1], const StrView sep) {
             if (*next.cs == '\n') { break; }
             regs->items[ncols] = &regs->buf.data[offset];
             ncols += next.sz ? 1: 0;
-            if (regsCopyChunk(regs, &offset, next.cs, next.sz)) {
-                perror("could not copy reg");
-                return -1;
+            e = regsCopyChunk(regs, &offset, next.cs, next.sz);
+            if (e) {
+                return e;
             };
         } while (next.sz > 0);
 
@@ -75,7 +75,7 @@ Err readRegs(Regs regs[static 1], const StrView sep) {
     regs->nregs = regindex;
     fclose(regfile);
 
-    return Ok;
+    return e;
 }
 
 QueryResult queryReg(const Regs r[static 1], regix_t row) {
