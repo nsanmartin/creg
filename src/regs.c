@@ -5,6 +5,9 @@
 #include <store.h>
 #include <reg-string.h>
 
+
+enum { ReadRegsDataBufSz = 4000 };
+
 Err initRegs(Mem m[static 1], Regs rc[static 1], size_t sz) {
     char* buf = memAlloc(m, sz);
     if (!buf) {
@@ -41,11 +44,10 @@ Err readRegs(Regs regs[static 1], const StrView sep) {
         return -1;
     }
 
-    char buf[DataBufSz] = {0};
+    char buf[ReadRegsDataBufSz] = {0};
     size_t regindex = 0;
     size_t offset = 0;
     regs->reg[regindex] = offset;
-    //StrView sep = (StrView){.cs=" ", .sz=1};
 
     size_t ncols = 0;
     const size_t regscount = getRegsCount();
@@ -163,7 +165,7 @@ Err printQuery(const Regs r[static 1], const char* q) {
     for (size_t i = 0; i < rs.sz; ++i) {
         if (cs.sz == 0) { /* no dot */
             regix_t reg = rs.data[i];
-            size_t ncols = r->ncols[reg];
+            size_t ncols = colsInReg(r, reg);
             for (size_t j = 0; j < ncols; ++j) {
                 QueryResult qr = queryRegItem(r, reg, j);
                 printQueryIfValid(&qr, sep);
