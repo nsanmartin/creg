@@ -19,6 +19,7 @@
 
 typedef int Err;
 typedef int regix_t;
+typedef size_t colix_t;
 typedef struct { char* data; size_t sz; } Array;
 typedef struct { size_t* data; size_t sz; } ArraySizeT;
 typedef struct { regix_t* data; size_t sz; } ArrayRegIxT;

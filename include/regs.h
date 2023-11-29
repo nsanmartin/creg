@@ -3,7 +3,7 @@
 
 #include <stddef.h>
 #include <stdbool.h>
-
+#include <stdint.h>
 #include <mem.h>
 #include <reg-string.h>
 
@@ -12,6 +12,7 @@ enum {
     NItemsBound = 1024 /*more than enough*/
 };
 
+enum { BadCol = SIZE_MAX };
 
 typedef struct {
     /* [data[beg .. end] slot[ix,len]...] */
@@ -35,8 +36,18 @@ Err readRegs(Regs regs[static 1], const StrView sep);
 QueryResult queryRegItem(const Regs r[static 1], regix_t row, size_t col);
 Err printQuery(const Regs r[static 1], const char* q);
 
+static inline bool regOutOfRange(const Regs r[static 1], regix_t i) {
+    return i >= r->nregs;
+}
+
 static inline size_t colsInReg(const Regs r[static 1], regix_t i) {
+    if (regOutOfRange(r, i)) { return 0; }
     size_t prev = i ? r->ncols[i-1] : 0;
     return r->ncols[i] - prev;
 }
+
+static inline bool colOutOfRange(const Regs r[static 1], regix_t reg, colix_t c) {
+    return c >= colsInReg(r, reg);
+}
+
 #endif
