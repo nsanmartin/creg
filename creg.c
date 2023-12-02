@@ -7,12 +7,13 @@
 #include <opt-parse.h>
 #include <store.h>
 #include <regstring.h>
+#include <regio.h>
 
 
 Err testSplit(Mem m[static 1]);
 ///
 void printChunk(const char* chunk, size_t len) {
-    fwrite(chunk, 1, len, stdout);
+    file_write(chunk, 1, len, stdout);
 }
 
 void printPreReg(const char reg) { printf("\"%c ", reg); }
@@ -24,9 +25,9 @@ void skipPre(const char reg) { (void)reg; }
 
 void print_help(const char* prog, const char* err_msg) {
     if (err_msg) {
-        fprintf(stderr,"%s\n", err_msg);
+        fprintfmt(stderr,"%s\n", err_msg);
     }
-    fprintf(stdout, "usage: %s [-psh] [0-9a-zA-z]\n", prog);
+    fprintfmt(stdout, "usage: %s [-psh] [0-9a-zA-z]\n", prog);
 }
 
 Err processQueries(Mem* mem, const char** queries, size_t nqueries, StrView sep) {
@@ -42,7 +43,7 @@ Err processQueries(Mem* mem, const char** queries, size_t nqueries, StrView sep)
         const char* q = queries[i];
         Err e = printQuery(&regs, q);
         if (e) { return e; }
-        fwrite("\n", 1, 1, stdout);
+        file_write("\n", 1, 1, stdout);
     }
     return e;
 }
@@ -52,7 +53,7 @@ int main(int argc, const char* argv[]) {
     Mem mem = (Mem) { .tag=DumbMemTag };
     Err e = initMem(&mem);
     if (e) {
-        fprintf(stderr, "%s\n", "Error memory, aborting.");
+        fprintfmt(stderr, "%s\n", "Error memory, aborting.");
         exit(-1);
     }
 
@@ -73,7 +74,7 @@ int main(int argc, const char* argv[]) {
                     (StrView){.cs=" ", .sz=1}
                 );
                 if (e != Ok) {
-                    fprintf(stderr, "error processing queries: ");
+                    fprintfmt(stderr, "error processing queries: ");
                 }
                 break;
             case QueriesSepInputTag:
@@ -84,7 +85,7 @@ int main(int argc, const char* argv[]) {
                     (StrView){.cs=cli->queriesSep.sep, .sz=strlen(cli->queriesSep.sep)}
                 );
                 if (e != Ok) {
-                    fprintf(stderr, "error processing queries: ");
+                    fprintfmt(stderr, "error processing queries: ");
                 }
                 break;
             case PrintInputTag: 
@@ -97,9 +98,9 @@ int main(int argc, const char* argv[]) {
         }
         if (e) {
             if (e == -1) {
-                fprintf(stderr, "aborting\n");
+                fprintfmt(stderr, "aborting\n");
             } else {
-                fprintf(stderr, "error: %s. Aborting\n", strerror(e));
+                fprintfmt(stderr, "error: %s. Aborting\n", strerror(e));
             }
             exit(e);
         }

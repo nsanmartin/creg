@@ -31,7 +31,7 @@ Err regsCopyChunk(Regs regs[static 1], size_t offset[static 1], const char* src,
         return Ok;
     }
     //TODO: use dynamic memory and realloc if we need more memory.
-    fprintf(stderr, "Not enough memory for reg size (%ld)\n", regs->buf.sz);
+    fprintfmt(stderr, "Not enough memory for reg size (%ld)\n", regs->buf.sz);
     return -1;
 }
 
@@ -147,10 +147,10 @@ Err fillQuery(const char* q, ArraySizeT* rs, ArraySizeT* cs) {
 
 void printQueryIfValid(QueryResult* qr, StrView sep) {
     if (qr->valid) {
-        fwrite(qr->b, 1, qr->sz, stdout);
-        fwrite(sep.cs, 1, sep.sz, stdout);
+        file_write(qr->b, 1, qr->sz, stdout);
+        file_write(sep.cs, 1, sep.sz, stdout);
     } else {
-        fprintf(stderr, "nternal error: invalid query\n");
+        fprintfmt(stderr, "Internal error: invalid query\n");
     }
 }
 
@@ -169,8 +169,8 @@ Err printQuery(const Regs r[static 1], const char* q) {
         regix_t regix = rs.data[i];
 
         if (regOutOfRange(r, regix)) {
-            fprintf(stderr, "invalid register in query\n");
-            break;
+            fprintfmt(stderr, "invalid register in query '%s'\n", q);
+            return -1;
         }
 
         if (cs.sz == 0) { /* no dot */
@@ -185,7 +185,7 @@ Err printQuery(const Regs r[static 1], const char* q) {
         for (size_t j = 0; j < cs.sz; ++j) {
             colix_t col = cs.data[j];
             if (col == BadCol || colOutOfRange(r, regix, col)) {
-                fprintf(stderr, "invalid column in query\n");
+                fprintfmt(stderr, "invalid column in query '%s'\n", q);
             } else {
                 QueryResult qr = queryRegItem(r, regix, col);
                 printQueryIfValid(&qr, sep);

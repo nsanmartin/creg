@@ -18,7 +18,7 @@ Err regsCacheCopyChunk(RegsCache regsCache[static 1], size_t offset[static 1], c
         *offset += n;
         return Ok;
     }
-    fprintf(stderr, "Not enough memory for reg size (%ld)\n", regsCache->bufsz);
+    fprintfmt(stderr, "Not enough memory for reg size (%ld)\n", regsCache->bufsz);
     return -1;
 }
 

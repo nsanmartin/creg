@@ -1,10 +1,10 @@
 #ifndef __UTIL_H_
 #define __UTIL_H_
 
-#include <stdio.h>
+#include <regio.h>
 
 #define LOG_INVALID_TAG                                                \
-        fprintf(                                                       \
+        fprintfmt(                                                       \
             stderr,                                                    \
             "\033[91m"                                                 \
             "creg fatal error:\n================"                      \

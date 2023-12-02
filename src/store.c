@@ -1,4 +1,4 @@
-#include <stdio.h>
+//#include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <stdbool.h>
@@ -8,6 +8,7 @@
 #include <mem.h>
 #include <cache.h>
 #include <regstring.h>
+#include <regio.h>
 
 
 enum { regFilePathMaxLen = 1000, regBufSize = 4000 };
@@ -25,13 +26,13 @@ const char* getRegfilePath(void) {
     if (_regFilePath[0] == 0) {
         const char* basedir = getenv("HOME");
         if (!basedir) {
-            fprintf(stderr, "Not HOME path found in env.");
+            fprintfmt(stderr, "Not HOME path found in env.");
             return 0x0;
         }
         size_t maxlen = regFilePathMaxLen - sizeof(_regFileName);
         size_t len = strnlen(basedir, maxlen);
         if (len == maxlen) {
-            fprintf(stderr, "HOME dir path large not supported.");
+            fprintfmt(stderr, "HOME dir path large not supported.");
             return 0x0;
         }
         strncpy(_regFilePath, basedir, len);
@@ -150,7 +151,7 @@ SizedBuf readFile(Mem m[static 1], FILE* f) {
     }
     Err ferr = ferror(f);
     if (ferr) {
-        fprintf(stderr, "There was an error reading regfile");
+        fprintfmt(stderr, "There was an error reading regfile");
         return (SizedBuf) { .buf=0x0, .sz=0, .e=ferr};
     }
     contents[len] = 0;
@@ -166,7 +167,7 @@ Err updateRegfile(Mem m[static 1]) {
     SizedBuf regsContents = readFile(m, regfile);
     if (regsContents.e) {
         fclose(regfile);
-        fprintf(stderr, "Could not read regfile.");
+        fprintfmt(stderr, "Could not read regfile.");
         return regsContents.e;
     }
     rewind(regfile);
@@ -174,7 +175,7 @@ Err updateRegfile(Mem m[static 1]) {
     char* buf[regBufSize];
     size_t read;
     while ((read = fread(buf, 1, regBufSize, stdin))) {
-        if(fwrite(buf, 1, read, regfile) < read) {
+        if(file_write(buf, 1, read, regfile) < read) {
             fclose(regfile);
             perror("There was an error writing to regfile");
             return errno;
@@ -183,7 +184,7 @@ Err updateRegfile(Mem m[static 1]) {
 
     Err res = Ok;
     if (ferror(regfile)
-        || (fwrite(regsContents.buf, 1, regsContents.sz, regfile) < regsContents.sz) 
+        || (file_write(regsContents.buf, 1, regsContents.sz, regfile) < regsContents.sz) 
         || (ferror(regfile)))
     {
         perror("There was an error writing to regfile");
@@ -243,22 +244,22 @@ Err printRegs(Mem m[static 1], const char* regs) {
             if (!readRegsCache(&regsCache)) {
                 for (;*regs; ++regs) {
                     regix_t ix = getRegIx(*regs);
-                    if (!isRegIxValid(ix)) { fprintf(stderr, "Bad registed"); }
+                    if (!isRegIxValid(ix)) { fprintfmt(stderr, "Bad registed"); }
                     else {
                         SizedBuf buf = regsCacheReg(&regsCache, ix+1);
-                        if (buf.e) { fprintf(stderr, "Error reading reg"); }
+                        if (buf.e) { fprintfmt(stderr, "Error reading reg"); }
                         else {
                             if (buf.sz > 1) {
-                                fwrite(buf.buf, 1, buf.sz, stdout);
+                                file_write(buf.buf, 1, buf.sz, stdout);
                             } else {
-                                fprintf(stderr, "Empty ref: %c\n", *regs);
+                                fprintfmt(stderr, "Empty ref: %c\n", *regs);
                             }
                         }
                     }
                 }
                 return Ok;
             } else {
-                fprintf(stderr, "Could not read regs\n");
+                fprintfmt(stderr, "Could not read regs\n");
             }
         }
     }
@@ -272,7 +273,7 @@ Err printRegsSplit(Mem m[static 1], const char* regs, const char* s) {
             for (;*regs; ++regs) {
                 regix_t ix = getRegIx(*regs);
                 SizedBuf buf = regsCacheReg(&regsCache, ix);
-                if (buf.e) { fprintf(stderr, "Error reading reg"); }
+                if (buf.e) { fprintfmt(stderr, "Error reading reg"); }
                 else {
                     if (buf.sz > 1) {
                         StrView subs = (StrView) { .cs=s, .sz=1};
@@ -282,21 +283,21 @@ Err printRegsSplit(Mem m[static 1], const char* regs, const char* s) {
                             s.sz -= search.sz + search.cs - s.cs ;
                             s.cs = search.cs + search.sz;
                             if (search.sz > 0) {
-                                fwrite(search.cs, 1, search.sz, stdout);
-                                fwrite("\n", 1, 1, stdout);
+                                file_write(search.cs, 1, search.sz, stdout);
+                                file_write("\n", 1, 1, stdout);
                             } else {
                                 break;
                             }
                         }
                         
                     } else {
-                        fprintf(stderr, "Empty ref: %d\n", ix);
+                        fprintfmt(stderr, "Empty ref: %d\n", ix);
                     }
                 }
             }
             return Ok;
         } else {
-            fprintf(stderr, "Could not read regs\n");
+            fprintfmt(stderr, "Could not read regs\n");
         }
     }
     return -1;
@@ -308,7 +309,7 @@ Err testSplit(Mem m[static 1]) {
         if (!readRegsCache(&regsCache)) {
             for (size_t ix = 0; ix < 10; ++ix) {
                 SizedBuf buf = regsCacheReg(&regsCache, ix);
-                if (buf.e) { fprintf(stderr, "Error reading reg"); }
+                if (buf.e) { fprintfmt(stderr, "Error reading reg"); }
                 else {
                     if (buf.sz > 1) {
                         StrView subs = (StrView) { .cs=" ", .sz=1};
@@ -318,21 +319,21 @@ Err testSplit(Mem m[static 1]) {
                             s.sz -= search.sz + search.cs - s.cs ;
                             s.cs = search.cs + search.sz;
                             if (search.sz > 0) {
-                                fwrite(search.cs, 1, search.sz, stdout);
-                                fwrite("\n", 1, 1, stdout);
+                                file_write(search.cs, 1, search.sz, stdout);
+                                file_write("\n", 1, 1, stdout);
                             } else {
                                 break;
                             }
                         }
                         
                     } else {
-                        fprintf(stderr, "Empty ref: %ld\n", ix);
+                        fprintfmt(stderr, "Empty ref: %ld\n", ix);
                     }
                 }
             }
             return Ok;
         } else {
-            fprintf(stderr, "Could not read regs\n");
+            fprintfmt(stderr, "Could not read regs\n");
         }
     }
     return -1;

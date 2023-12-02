@@ -11,7 +11,7 @@
 
 void assertStrViewEq(StrView expected, StrView s) {
     if (expected.sz != s.sz || strncmp(expected.cs, s.cs, s.sz)) {
-        fprintf(
+        fprintfmt(
             stderr, "Error: expected: '%s', result: '%s'.\n", expected.cs, s.cs
         );
     } else {
@@ -21,7 +21,7 @@ void assertStrViewEq(StrView expected, StrView s) {
 
 void assertTrue(bool p) {
     if (!p) {
-        fprintf(stderr, "Error: expected True but was False\n");
+        fprintfmt(stderr, "Error: expected True but was False\n");
     } else {
         puts("Ok");
     }

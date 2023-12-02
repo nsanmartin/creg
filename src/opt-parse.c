@@ -7,6 +7,7 @@
 
 #include <mem.h>
 #include <opt-parse.h>
+#include <regio.h>
 
 const char* optstring = "s:ph";
 
@@ -119,7 +120,7 @@ CliInput* opt_parse(Mem m[static 1], int argc, const char* argv[]) {
         }
     }
 
-    fprintf(stderr, "Bad input\n");
+    fprintfmt(stderr, "Bad input\n");
     return 0x0;
 }
 

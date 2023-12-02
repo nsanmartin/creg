@@ -24,7 +24,7 @@ void* memAlloc(Mem m[static 1], size_t n) {
             return buf;
         case FixedSzGroupMemTag:
               if (n >= FixedSzGroupMemSz) {
-                  fprintf(stderr, "%s\n", "Not enough Fixed Size Memory. Aborting.");
+                  fprintfmt(stderr, "%s\n", "Not enough Fixed Size Memory. Aborting.");
                   return 0x0;
               }
               buf = malloc(n);
