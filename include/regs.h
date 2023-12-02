@@ -5,7 +5,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <mem.h>
-#include <reg-string.h>
+#include <regstring.h>
 
 enum {
     NRegsBound = 256, /* if changed, update getRegIx */

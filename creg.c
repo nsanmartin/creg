@@ -6,7 +6,7 @@
 #include <mem.h>
 #include <opt-parse.h>
 #include <store.h>
-#include <reg-string.h>
+#include <regstring.h>
 
 
 Err testSplit(Mem m[static 1]);

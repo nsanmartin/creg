@@ -15,7 +15,6 @@ Err foreachReg(
     void(*postFn)(void)
 );
 
-//char* readRegfile(Mem m[static 1]);
 Err updateRegfile(Mem m[static 1]);
 Err printRegs(Mem m[static 1], const char* regs);
 Err printRegsSplit(Mem m[static 1], const char* regs, const char* s);

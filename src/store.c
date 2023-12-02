@@ -7,7 +7,7 @@
 #include <store.h>
 #include <mem.h>
 #include <cache.h>
-#include <reg-string.h>
+#include <regstring.h>
 
 
 enum { regFilePathMaxLen = 1000, regBufSize = 4000 };

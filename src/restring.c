@@ -1,6 +1,6 @@
 #include <string.h>
 
-#include <reg-string.h>
+#include <regstring.h>
 
 
 /**

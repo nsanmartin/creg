@@ -2,7 +2,7 @@
 #include <string.h>
 #include <stdio.h>
 
-#include <reg-string.h>
+#include <regstring.h>
 
 #define CSTRLEN(A) (sizeof(A)/sizeof(A[0]))
 #define strViewFromArr(A) ((StrView){.cs=A,.sz=CSTRLEN(A)-1})

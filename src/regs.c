@@ -3,7 +3,7 @@
 
 #include <regs.h>
 #include <store.h>
-#include <reg-string.h>
+#include <regstring.h>
 
 
 enum { ReadRegsDataBufSz = 4000 };
