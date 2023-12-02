@@ -88,7 +88,7 @@ int main(int argc, const char* argv[]) {
                 }
                 break;
             case PrintInputTag: 
-                e = foreachReg("", printPreReg, printChunk, printPostLn);
+                e = foreachReg(printPreReg, printChunk, printPostLn);
                 break;
             case HelpInputTag:
                 print_help(argv[0], "");

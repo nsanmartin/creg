@@ -95,14 +95,8 @@ Err ignoreUntilEol(FILE*f, bool newlineRead) {
  * queryRegs == "" means all regs
  */
 Err foreachReg(
-        const char* queryRegs,
-        void(*preFn)(const char),
-        void(*chunkFn)(const char*, size_t len),
-        void(*postFn)(void)
-    )
-{
-    //bool ignoreStream = false;
-
+    void(*preFn)(const char), void(*chunkFn)(const char*, size_t len), void(*postFn)(void)
+) {
     FILE* regfile = fopen(getRegfilePath(), "r");
     if (!regfile) {
         perror("Could not read regfile.");
@@ -112,40 +106,21 @@ Err foreachReg(
     char buf[regBufSize];
     size_t regindex = 0;
 
-    size_t queryRegsLen = strlen(queryRegs);
-    char visited[queryRegsLen];
-    bzero(visited, queryRegsLen);
-
     while(fgets(buf, sizeof(buf), regfile) != NULL && regindex < getRegsCount()) {
         char reg = _queryRegs[regindex];
-        size_t regIxInQuery = charInList(reg, queryRegs);
-        bool regInList = !*queryRegs || regIxInQuery < queryRegsLen;
         LastIx lastIx = getLastIx(buf);
 
-        if (regInList) {
-            visited[regIxInQuery] = 1;
-            preFn(reg);
+        preFn(reg);
+        chunkFn(buf, lastIx.ix);
+        while(!lastIx.newline && fgets(buf, sizeof(buf), regfile) != NULL) {
+            lastIx = getLastIx(buf);
             chunkFn(buf, lastIx.ix);
-            while(!lastIx.newline && fgets(buf, sizeof(buf), regfile) != NULL) {
-                lastIx = getLastIx(buf);
-                chunkFn(buf, lastIx.ix);
-            }
-            postFn();
-        } else {
-            ignoreUntilEol(regfile, lastIx.newline);
         }
+        postFn();
         regindex++;
     }
     
-    
     fclose(regfile);
-
-    for (size_t i = 0; i < queryRegsLen; ++i) {
-        if (!visited[i]) {
-            fprintf(stderr, "Not register %c!\n", queryRegs[i]);
-            return -1;
-        }
-    }
     return Ok;
 }
 

@@ -10,7 +10,6 @@ const char* getRegfilePath(void);
 size_t getRegsCount();
 
 Err foreachReg(
-    const char* regList,
     void(*preFn)(const char),
     void(*chunkFn)(const char*, size_t len),
     void(*postFn)(void)

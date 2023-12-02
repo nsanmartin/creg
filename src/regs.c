@@ -51,7 +51,6 @@ Err readRegs(Regs regs[static 1], const StrView sep) {
 
     size_t ncols = 0;
     const size_t regscount = getRegsCount();
-    size_t last_sz = 0;
 
     while(fgets(buf, sizeof(buf), regfile) != NULL && regindex < regscount) {
         StrView next = (StrView){.cs=buf, .sz=0};
@@ -61,7 +60,6 @@ Err readRegs(Regs regs[static 1], const StrView sep) {
             regs->items[ncols] = &regs->buf.data[offset];
             ncols += next.sz ? 1: 0;
             e = regsCopyChunk(regs, &offset, next.cs, next.sz);
-            last_sz = next.sz;
             if (e) {
                 return e;
             };
