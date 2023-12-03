@@ -1,4 +1,5 @@
 #include <string.h>
+#include <ctype.h>
 
 #include <regstring.h>
 
@@ -20,6 +21,25 @@ StrView findNextSubStrOrLastIx(const char* s, StrView sep) {
     ++s;
 
     for (; *s && *s != '\n' && strncmp(s, sep.cs, sep.sz) != 0; ++s)
+        ;
+    res.sz = s-res.cs;
+    return res;
+}
+
+StrView findNextSubStrOrLastIxSpace(const char* s) {
+
+    while (isspace(*s) && *s != '\n') { ++s; }
+
+    StrView res = (StrView) { .cs=s, .sz=0 };
+    if (!*s) { /* return empty string */ return res; }
+    else if (*s == '\n') {
+        res.sz = 1;
+        return res;
+    }
+
+    ++s;
+
+    for (; *s && *s != '\n' && isspace(*s) != 0; ++s)
         ;
     res.sz = s-res.cs;
     return res;

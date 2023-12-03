@@ -1,4 +1,3 @@
-//#include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <stdbool.h>
@@ -100,7 +99,7 @@ Err foreachReg(
 ) {
     FILE* regfile = fopen(getRegfilePath(), "r");
     if (!regfile) {
-        perror("Could not read regfile.");
+        print_error("Could not read regfile.");
         return -1;
     }
 
@@ -128,25 +127,25 @@ Err foreachReg(
 
 SizedBuf readFile(Mem m[static 1], FILE* f) {
     if (fseek(f, 0, SEEK_END) != 0) { 
-        perror("Could not seek regfile end.");
+        print_error("Could not seek regfile end.");
         return (SizedBuf) { .buf=0x0, .sz=0, .e=errno};
     }
 
     long len = ftell(f);
     if (len < 0) { 
-        perror("Could not ftell the end position of regfile.");
+        print_error("Could not ftell the end position of regfile.");
         return (SizedBuf) {.buf=0x0, .sz=0, .e=errno};
     }
     rewind(f);
     char* contents = memAlloc(m, len + 1);
     if (!contents) {
-        perror("Could not alloc memory for regfile contents.");
+        print_error("Could not alloc memory for regfile contents.");
         return (SizedBuf) {.buf=0x0, .sz=0, .e=errno};
     }
     size_t read = fread(contents, 1, len,f);
     //TODO: check this cast
     if (read != (size_t)len) {
-        perror("Regfile could not be read.");
+        print_error("Regfile could not be read.");
         return (SizedBuf) { .buf=0x0, .sz=0, .e=errno};
     }
     Err ferr = ferror(f);
@@ -161,7 +160,7 @@ SizedBuf readFile(Mem m[static 1], FILE* f) {
 Err updateRegfile(Mem m[static 1]) {
     FILE* regfile = fopen(getRegfilePath(), "r+");
     if (!regfile) {
-        perror("Could not open regfile.");
+        print_error("Could not open regfile.");
         return errno;
     }
     SizedBuf regsContents = readFile(m, regfile);
@@ -177,7 +176,7 @@ Err updateRegfile(Mem m[static 1]) {
     while ((read = fread(buf, 1, regBufSize, stdin))) {
         if(file_write(buf, 1, read, regfile) < read) {
             fclose(regfile);
-            perror("There was an error writing to regfile");
+            print_error("There was an error writing to regfile");
             return errno;
         };
     }
@@ -187,12 +186,12 @@ Err updateRegfile(Mem m[static 1]) {
         || (file_write(regsContents.buf, 1, regsContents.sz, regfile) < regsContents.sz) 
         || (ferror(regfile)))
     {
-        perror("There was an error writing to regfile");
+        print_error("There was an error writing to regfile");
         res = errno;
     }
 
     if (EOF == fclose(regfile)) {
-        perror("There was an error closing regfile");
+        print_error("There was an error closing regfile");
         res = errno;
     };
     return res;
@@ -202,7 +201,7 @@ Err updateRegfile(Mem m[static 1]) {
 Err readRegsCache(RegsCache regsCache[static 1]) {
     FILE* regfile = fopen(getRegfilePath(), "r");
     if (!regfile) {
-        perror("Could not read regfile.");
+        print_error("Could not read regfile.");
         return -1;
     }
 

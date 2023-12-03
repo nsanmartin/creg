@@ -1,6 +1,7 @@
 #include <string.h>
 
 #include <cache.h>
+#include <regio.h>
 
 
 Err initRegsCache(Mem m[static 1], RegsCache rc[static 1], size_t sz) {

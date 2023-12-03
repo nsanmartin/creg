@@ -11,15 +11,14 @@
 
 
 Err testSplit(Mem m[static 1]);
-///
+
 void printChunk(const char* chunk, size_t len) {
     file_write(chunk, 1, len, stdout);
 }
 
-void printPreReg(const char reg) { printf("\"%c ", reg); }
-void printPostLn(void) { puts(""); }
-void printPostSpace(void) { printf(" "); }
-void regTooLargefn(void) { puts("\t\033[91m""\\...""\033[0m"); }
+void printPreReg(const char reg) { printfmt("\"%c ", reg); }
+void printPostLn(void) { file_write("\n", 1, 1, stdout); }
+void printPostSpace(void) { printfmt(" "); }
 
 void skipPre(const char reg) { (void)reg; }
 

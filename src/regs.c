@@ -40,7 +40,7 @@ Err readRegs(Regs regs[static 1], const StrView sep) {
     FILE* regfile = fopen(getRegfilePath(), "r");
     Err e = !regfile;
     if (e) {
-        perror("Could not read regfile.");
+        print_error("Could not read regfile.");
         return -1;
     }
 

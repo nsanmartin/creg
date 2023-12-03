@@ -19,7 +19,7 @@ void* memAlloc(Mem m[static 1], size_t n) {
         case DumbMemTag:
             buf = malloc(n);
             if (!buf) {
-                perror("Could nor obtain memory");
+                print_error("Could nor obtain memory");
             }
             return buf;
         case FixedSzGroupMemTag:
@@ -29,7 +29,7 @@ void* memAlloc(Mem m[static 1], size_t n) {
               }
               buf = malloc(n);
               if (!buf) {
-                  perror("Could nor obtain memory");
+                  print_error("Could nor obtain memory");
                   return 0x0;
               }
               return m->fixedSzGroup.ptr[n++] = buf;
