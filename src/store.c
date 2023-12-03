@@ -171,7 +171,7 @@ Err updateRegfile(Mem m[static 1]) {
     }
     rewind(regfile);
     
-    char* buf[regBufSize];
+    char buf[regBufSize];
     size_t read;
     while ((read = fread(buf, 1, regBufSize, stdin))) {
         if(file_write(buf, 1, read, regfile) < read) {
