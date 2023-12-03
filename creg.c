@@ -70,7 +70,7 @@ int main(int argc, const char* argv[]) {
                     &mem,
                     cli->queries.queries,
                     cli->queries.n,
-                    (StrView){.cs=" ", .sz=1}
+                    (StrView){0}
                 );
                 if (e != Ok) {
                     fprintfmt(stderr, "error processing queries: ");

@@ -16,12 +16,12 @@ SRCS:=$(wildcard $(SRCDIR)/*.c)
 OBJ:=$(SRCS:$(SRCDIR)/%.c=$(OBJDIR)/%.o)
 DEBUGOBJ:=$(SRCS:$(SRCDIR)/%.c=$(DEBUGOBJDIR)/%.o)
 
-creg-debug: creg.c $(DEBUGOBJ)
-	$(CC) $(CFLAGSDEBUG) $(CFLAGS) -I$(INCLUDE) \
-		-o $(BUILD)/$@ $^
-
 creg: creg.c $(OBJ)
 	$(CC) -O3 $(STRICT_CFLAGS) $(CFLAGS) -I$(INCLUDE) \
+		-o $(BUILD)/$@ $^
+
+creg-debug: creg.c $(DEBUGOBJ)
+	$(CC) $(CFLAGSDEBUG) $(CFLAGS) -I$(INCLUDE) \
 		-o $(BUILD)/$@ $^
 
 

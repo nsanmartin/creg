@@ -7,7 +7,7 @@
 /**
  * \n not in s and s is not empty
  */
-StrView findNextSubStrOrLastIx(const char* s, StrView sep) {
+StrView findNextSubStrOrLastIxSep(const char* s, StrView sep) {
 
     while (strncmp(s, sep.cs, sep.sz) == 0) { s += sep.sz; }
 
@@ -39,10 +39,17 @@ StrView findNextSubStrOrLastIxSpace(const char* s) {
 
     ++s;
 
-    for (; *s && *s != '\n' && isspace(*s) != 0; ++s)
+    for (; *s && *s != '\n' && !isspace(*s); ++s)
         ;
     res.sz = s-res.cs;
     return res;
+}
+
+StrView findNextSubStrOrLastIx(const char* s, StrView sep) {
+    if (sep.sz == 0) {
+        return findNextSubStrOrLastIxSpace(s);
+    }
+    return findNextSubStrOrLastIxSep(s, sep);
 }
 
 // return the index of first occurence od substr, or end if not found
